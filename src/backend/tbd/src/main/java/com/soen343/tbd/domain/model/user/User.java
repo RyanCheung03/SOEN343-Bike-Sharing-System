@@ -1,13 +1,8 @@
-package com.soen343.tbd.entity;
-import jakarta.persistence.*;
+package com.soen343.tbd.domain.model.user;
 
 import java.sql.Timestamp;
 
-@Entity
-@Table(name = "users") // Schema is now handled by configuration
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     public String getFullName() {
@@ -58,7 +53,22 @@ public class User {
         this.created_at = created_at;
     }
 
-    @Column(name = "full_name") // if column name has underscore
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     private String fullName;
 
     private String email;
@@ -68,4 +78,10 @@ public class User {
     private String role;
 
     private Timestamp created_at;
+
+
+    private String address;
+    private String username;
 }
+
+

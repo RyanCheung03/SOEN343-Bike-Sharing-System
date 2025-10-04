@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import './auth.css';
 import logo from '../assets/logo.png';
+import axios from "axios";
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -12,12 +13,33 @@ const Auth = () => {
         confirmPassword: ''
     });
 
+
     const handleInputChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
     };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        // Handle form submission logic here
+        const data = {
+            "email": formData.email,
+            "password": formData.password
+        }
+        try {
+            //sending request to the backend
+            const response = await axios.post("http://localhost:8080/api/login", data);
+            if (response.data === false){
+                alert("Invalid Credentials");
+            }
+            else{
+               alert("Login Successful");
+            }
+        } catch (error) {
+            console.error("There was an error!", error);
+        }
+    }
 
     const toggleMode = () => {
         setIsLogin(!isLogin);
@@ -43,7 +65,7 @@ const Auth = () => {
                             <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
                         </div>
                         <div className="card-body">
-                            <form>
+                            <form onSubmit={handleSubmit} className="auth-form">
                                 {!isLogin && (
                                     <div className="name-row">
                                         <input

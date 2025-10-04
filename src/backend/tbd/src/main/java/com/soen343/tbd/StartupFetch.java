@@ -1,6 +1,6 @@
 package com.soen343.tbd;
 
-import com.soen343.tbd.entity.User;
+import com.soen343.tbd.infrastructure.persistence.entity.User;
 import com.soen343.tbd.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
