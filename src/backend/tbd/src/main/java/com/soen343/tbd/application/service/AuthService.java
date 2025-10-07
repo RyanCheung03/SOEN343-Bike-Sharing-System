@@ -52,11 +52,13 @@ public class AuthService {
      * @param email    user's email address
      * @param password user's password (will be encoded)
      */
-    public void registerUser(String fullName, String email, String password) {
+    public void registerUser(String fullName, String email, String password, String address, String username) {
         // Create a new user entity
         User newUser = new User();
         newUser.setFullName(fullName);
         newUser.setEmail(email);
+        newUser.setAddress(address);
+        newUser.setUsername(username);
 
         // Hash the password before saving
         String encodedPassword = passwordEncoder.encode(password);

@@ -36,14 +36,10 @@ public class StartupFetch {
                             user.getEmail(),
                             user.getFullName()
                         );
-                        System.out.println("👤 User ID: " + user.getId() +
-                                        " | Email: " + user.getEmail() +
-                                        " | Name: " + user.getFullName());
                     });
                 }
             } catch (Exception e) {
                 logger.error("Error fetching users from database: ", e);
-                e.printStackTrace(); // This will print the full stack trace
             }
         };
     }

@@ -54,7 +54,9 @@ public class AuthController {
         authService.registerUser(
             signupRequest.getFullName(),
             signupRequest.getEmail(),
-            signupRequest.getPassword()
+            signupRequest.getPassword(),
+            signupRequest.getAddress(),
+            signupRequest.getUsername()
         );
 
         Map<String, String> response = new HashMap<>();
