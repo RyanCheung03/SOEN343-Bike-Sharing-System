@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import './auth.css';
-import logo from '../assets/logo.png';
+import "./auth.css";
+import logo from "../assets/logo.png";
 import axios from "axios";
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -109,11 +109,20 @@ const Auth = () => {
         }
     };
 
-    const toggleMode = () => {
-        setIsLogin(!isLogin);
-        setFormData(initialForm);
-        setError('');
-    };
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      address: "",
+      city: "",
+      postalCode: "",
+    });
+  };
 
     return (
         <div>
