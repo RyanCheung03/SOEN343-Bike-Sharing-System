@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+// Utility class for generating and validating JWT tokens
 public class JwtUtil {
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);

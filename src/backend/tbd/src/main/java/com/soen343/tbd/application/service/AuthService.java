@@ -18,7 +18,6 @@ public class AuthService {
     private UserRepository userRepository;
 
     public boolean authenticate(String email, String password) {
-        // Debug logging (removed for production)
 
         // Find user by email in database
         Optional<User> userOptional = userRepository.findByEmail(email);
@@ -35,10 +34,8 @@ public class AuthService {
 
         // Check if the stored password looks like it's hashed (starts with $2a, $2b, etc.)
         if (user.getPassword() != null && user.getPassword().startsWith("$2")) {
-            // Password is hashed, use BCrypt comparison
             passwordMatches = passwordEncoder.matches(password, user.getPassword());
         } else {
-            // Password is plain text (not recommended for production)
             passwordMatches = password.equals(user.getPassword());
         }
 
@@ -63,9 +60,6 @@ public class AuthService {
         // Hash the password before saving
         String encodedPassword = passwordEncoder.encode(password);
         newUser.setPassword(encodedPassword);
-
-        // Set any default values or roles if needed
-        // e.g., newUser.setRole("USER");
 
         // Save the user to the database
         userRepository.save(newUser);

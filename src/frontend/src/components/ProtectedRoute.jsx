@@ -1,5 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+// A wrapper for <Route> that redirects to the login
+// screen if you're not yet authenticated.
+// see example in app.js
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('jwt_token');

@@ -20,6 +20,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // This method is called for every incoming request to filter and validate the JWT token prior to processing
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
@@ -37,6 +39,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.warn("Unable to get JWT Token or JWT Token has expired");
             }
         }
+        // Validate token and set authentication context
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(jwtToken, email)) {

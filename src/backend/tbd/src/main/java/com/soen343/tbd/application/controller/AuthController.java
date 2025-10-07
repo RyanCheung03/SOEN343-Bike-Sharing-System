@@ -30,8 +30,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        // Authenticate user
         if (authService.authenticate(loginRequest.getEmail(), loginRequest.getPassword())) {
+            // Generate JWT token
             String token = jwtUtil.generateToken(loginRequest.getEmail());
+            // Fetch user details
             User user = userRepository.findByEmail(loginRequest.getEmail()).orElse(null);
             String fullName = user.getFullName();
             LoginResponse response = new LoginResponse(token, loginRequest.getEmail(), fullName);
