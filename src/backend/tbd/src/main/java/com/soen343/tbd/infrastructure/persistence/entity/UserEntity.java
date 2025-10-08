@@ -9,7 +9,31 @@ import java.sql.Timestamp;
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
+
+    @Column(name = "full_name") // if column name has underscore
+    private String fullName;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "password")
+    private String password;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "role")
+    private String role;
+
+    @Column(name = "created_at")
+    private Timestamp createdAt;
+
+    @Column(name = "updated_at")
+    private Timestamp updatedAt;
 
     public String getFullName() {
         return fullName;
@@ -19,11 +43,11 @@ public class UserEntity {
         this.fullName = fullName;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -43,6 +67,14 @@ public class UserEntity {
         this.password = password;
     }
 
+    public String getAddress() { return address; }
+
+    public void setAddress(String address) { this.address = address; }
+
+    public String getUsername() { return username; }
+
+    public void setUsername(String username) { this.username = username; }
+
     public String getRole() {
         return role;
     }
@@ -51,22 +83,16 @@ public class UserEntity {
         this.role = role;
     }
 
-    public Timestamp getCreated_at() {
-        return created_at;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreated_at(Timestamp created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(Timestamp created_at) {
+        this.createdAt = createdAt;
     }
 
-    @Column(name = "full_name") // if column name has underscore
-    private String fullName;
+    public Timestamp getUpdatedAt() { return updatedAt; }
 
-    private String email;
+    public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
 
-    private String password;
-
-    private String role;
-
-    private Timestamp created_at;
 }

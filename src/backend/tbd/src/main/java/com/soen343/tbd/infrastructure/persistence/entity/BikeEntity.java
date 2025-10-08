@@ -13,11 +13,12 @@ public class BikeEntity {
     @Column(name = "bike_id")
     private Long bikeId;
 
-    @Column(name = "dock_id")
-    private Long dockId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dock_id", referencedColumnName = "dock_id")
+    private DockEntity dock;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "bike_status", nullable = false)
     private BikeStatus status;
 
     @Enumerated(EnumType.STRING)
@@ -35,12 +36,12 @@ public class BikeEntity {
         this.bikeId = bikeId;
     }
 
-    public Long getDockId() {
-        return dockId;
+    public DockEntity getDock() {
+        return dock;
     }
 
-    public void setDockId(Long dockId) {
-        this.dockId = dockId;
+    public void setDock(DockEntity dock) {
+        this.dock = dock;
     }
 
     public BikeStatus getStatus() {
