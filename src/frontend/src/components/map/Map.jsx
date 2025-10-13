@@ -14,13 +14,10 @@ L.Icon.Default.mergeOptions({
 
 const Map = () => {
     // Center of the map, where the map will render first essentially
-    const center = [45.50884, -73.58781]; // These are the coords of Montreal (found online)
+    const center = [45.552648, -73.681342]; // These are the coords of Montreal, kinda (found online)
 
     // State to hold stations data
     const [stations, setStations] = useState([]);
-
-    // Fetching error state for info
-    const [fetchingError, setFetchingError] = useState([]);
 
 
 
@@ -28,13 +25,12 @@ const Map = () => {
     useEffect(() => {
         async function fetchStations() {
             try {
-                // Putting station id as 1 here, just to test for now
-                const response = await axios.get("http://localhost:8080/api/stations/1/details");
-                console.log(response)
+                
+                const response = await axios.get("http://localhost:8080/api/stations/allStations/details");
+                console.log("Received Response with data: ", response.data)
                 setStations(response.data);
             } catch (error) {
                 console.error("Error fetching station:", error);
-                setFetchingError(error);
             }
         }
 
@@ -48,22 +44,27 @@ const Map = () => {
     }
 
     return (
-    <MapContainer center={center} zoom={13} style={size}>
-        {/* Maps generally use tiles so they dont have to render the whole world and only what fits in the map display, hence this import by Leaflet for rendering*/}
-        <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <MapContainer center={center} zoom={11} style={size}>
+            {/* Maps generally use tiles so they dont have to render the whole world and only what fits in the map display, hence this import by Leaflet for rendering*/}
+            <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-        {/* Example marker */}
-        <Marker position={center}>
-            {/* Popup appears when you click on marker */}
-            <Popup>
-                <b>Montreal Center</b> <br /> {stations}
-            </Popup>
-        </Marker>
-        {/* You can map stations to markers here if needed */}
-    </MapContainer>
+            {/* Dynamically display all markers for stations on map */}
+            {stations &&
+                stations.map((station) => {
+                    return(
+                        <Marker position={station.position.split(",").map(coord => parseFloat(coord.trim()))}>
+                            <Popup>
+                                <b>{station.stationName}</b> <br /> 
+                                {station.capacity} <br />
+                            </Popup>
+                        </Marker>
+                    )
+                })
+            }
+        </MapContainer>
     );
 };
 

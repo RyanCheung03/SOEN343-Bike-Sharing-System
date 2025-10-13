@@ -8,6 +8,7 @@ import com.soen343.tbd.infrastructure.persistence.repository.JpaStationRepositor
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public class StationRepositoryAdapter implements StationRepository {
@@ -30,4 +31,12 @@ public class StationRepositoryAdapter implements StationRepository {
         var stationEntity = stationMapper.toEntity(station);
         jpaStationRepository.save(stationEntity);
     }
+
+    @Override
+    public List<Station> findAll() {
+        return jpaStationRepository.findAll()
+            .stream()
+            .map(stationMapper::toDomain)
+            .toList();
+}
 }

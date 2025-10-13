@@ -40,8 +40,40 @@ public class StationService {
             logger.warn("Station with id {} not found in repository", stationId);
             return Optional.empty();
         }
+        
+        return getStationDTO(stationOpt);
+    }
 
-        Station station = stationOpt.get();
+    /**
+     * Get a complete view of all stations along with all their docks and bikes
+     */
+    public List<StationDetailsDTO> getAllStationsWithDetails() {
+        logger.debug("Fetching station details for all stations...");
+
+        List<Station> allStations = stationRepository.findAll();
+        List<StationDetailsDTO> allStationDTOs = new ArrayList<>();
+
+        if (allStations.isEmpty()) {
+            logger.warn("No stations found in database.");
+            return List.of(); // return an empty list
+        }
+        
+        for (Station station : allStations) {
+            allStationDTOs.add(getStationDTO(station));
+        }
+
+        return allStationDTOs;
+    }
+
+
+    /*
+     * Quick explanation of the below 2 methods:
+     * 
+     * These methods are overloaded for Optional and non-Optional Station types. The reasoning for this
+     * is because I needed to reuse this code in order to fetch all stations on startup. These methods
+     * just convert whatever we got from repositories station fetch we convert to DTO versions.
+     */
+    private StationDetailsDTO getStationDTO(Station station) {
         logger.debug("Found station: {} with {} docks", station.getStationName(),
                      station.getDocks() != null ? station.getDocks().size() : 0);
 
@@ -58,8 +90,13 @@ public class StationService {
         }
 
         logger.info("Successfully built station details DTO for stationId: {} with {} docks and {} bikes",
-                    stationId, docks.size(), allBikes.size());
+                    station.getStationId(), docks.size(), allBikes.size());
 
-        return Optional.of(new StationDetailsDTO(station, docks, allBikes));
+        return new StationDetailsDTO(station, docks, allBikes);
     }
+
+    private Optional<StationDetailsDTO> getStationDTO(Optional<Station> optionalStation) {
+        return optionalStation.map(this::getStationDTO);
+    }
+
 }

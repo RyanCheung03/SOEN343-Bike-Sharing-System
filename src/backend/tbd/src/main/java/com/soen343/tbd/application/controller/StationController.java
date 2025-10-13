@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/stations")
 public class StationController {
@@ -44,5 +46,29 @@ public class StationController {
                     logger.warn("Station not found for stationId: {}", stationId);
                     return ResponseEntity.notFound().build();
                 });
+    }
+
+    /**
+     * Get complete station details including all docks and bikes for all stations in the db.
+     *
+     * Returns:
+     * - List of stations each containing this info:
+     *      -> Station information (name, address, capacity, etc.)
+     *      -> List of all docks at this station
+     *      -> For each dock, the bike (if any) that's currently docked there
+     */
+    @GetMapping("/allStations/details")
+    public ResponseEntity<List<StationDetailsDTO>> getAllStationsDetails() {
+        logger.info("Received request to get station details for all stations");
+
+        List<StationDetailsDTO> stationDetailsList = stationService.getAllStationsWithDetails();
+
+        if (stationDetailsList.isEmpty()) {
+            logger.warn("No stations found or details could not be retrieved");
+            return ResponseEntity.notFound().build();
+        }
+
+        logger.info("Successfully retrieved details for {} stations", stationDetailsList.size());
+        return ResponseEntity.ok(stationDetailsList);
     }
 }
