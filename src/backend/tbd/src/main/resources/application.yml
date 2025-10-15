@@ -12,7 +12,7 @@ spring:
       hibernate.jdbc.time_zone: UTC
       hibernate.default_schema: bikersdream
       hibernate.jdbc.lob.non_contextual_creation: true
-    show-sql: true     # Added to see the SQL queries being executed
+    show-sql: false     # To prevent SQL queries from being printed in the console
   flyway:
     enabled: true
     locations: classpath:db/migration
