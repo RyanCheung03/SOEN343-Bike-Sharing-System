@@ -6,6 +6,11 @@ import com.soen343.tbd.domain.model.ids.StationId;
 
 import java.util.List;
 
+import com.soen343.tbd.domain.model.enums.DockStatus;
+
+
+// IMPORTANT TODO:
+// NEED TO IMPLEMENT STATION AVAILABILITY LOGIC
 public class Station {
     private final StationId stationId;
     private final String stationName;
@@ -29,10 +34,23 @@ public class Station {
         this.position = position;
         this.address = address;
         this.capacity = capacity;
-        this.numberOfBikesDocked = numberOfBikesDocked;
         this.docks = docks;
         this.startedTrips = startedTrips;
         this.endedTrips = endedTrips;
+
+        this.numberOfBikesDocked = calculateNumberOfBikes();
+    }
+
+    private int calculateNumberOfBikes(){
+        int numBikes = 0;
+
+        for (Dock dock : docks){
+            if(dock.getStatus().equals(DockStatus.OCCUPIED)){
+                numBikes++;
+            }
+        }
+
+        return numBikes;
     }
 
     public StationId getStationId() {
@@ -75,8 +93,12 @@ public class Station {
         return numberOfBikesDocked;
     }
 
-    public void setNumberOfBikesDocked(int numberOfBikesDocked) {
-        this.numberOfBikesDocked = numberOfBikesDocked;
+    public void incrementBikesDocked(){
+        this.numberOfBikesDocked++;
+    }
+
+    public void decrementBikesDocked(){
+        this.numberOfBikesDocked--;
     }
 
     public List<Dock> getDocks() {

@@ -5,7 +5,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import com.soen343.tbd.domain.model.Trip;
+import com.soen343.tbd.domain.model.enums.TripStatus;
 import com.soen343.tbd.domain.model.ids.TripId;
+import com.soen343.tbd.domain.model.ids.UserId;
 import com.soen343.tbd.domain.repository.TripRepository;
 import com.soen343.tbd.infrastructure.persistence.entity.BikeEntity;
 import com.soen343.tbd.infrastructure.persistence.entity.BillEntity;
@@ -29,6 +31,12 @@ public class TripRepositoryAdapter implements TripRepository {
         this.entityManager = entityManager;
     }
 
+    @Override
+    public Optional<Trip> checkRentalsByUserId(UserId userId) {
+        return jpaTripRepository.findByUser_UserIdAndStatus(userId.value(), TripStatus.ONGOING)
+            .map(tripMapper::toDomain);
+    }
+    
     @Override
     public Optional<Trip> findById(TripId tripId) {
         return jpaTripRepository.findById(tripId.value())

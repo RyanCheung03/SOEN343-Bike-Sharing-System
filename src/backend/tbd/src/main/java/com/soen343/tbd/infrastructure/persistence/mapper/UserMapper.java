@@ -29,7 +29,7 @@ public abstract class UserMapper {
             return null;
         }
 
-        UserId userId = new UserId(entity.getId());
+        UserId userId = new UserId(entity.getUserId());
 
         if ("RIDER".equals(entity.getRole())) {
             // Convert BillEntity -> Bill
@@ -74,7 +74,7 @@ public abstract class UserMapper {
     }
 
     // Domain -> Entity
-    @Mapping(target = "id", expression = "java(domain.getUserId() != null ? domain.getUserId().value() : null)")
+    @Mapping(target = "userId", expression = "java(domain.getUserId() != null ? domain.getUserId().value() : null)")
     @Mapping(target = "updatedAt", expression = "java(new java.sql.Timestamp(System.currentTimeMillis()))")
     // Ignore nested relationships since they're mapped separately
     @Mapping(target = "bills", ignore = true)

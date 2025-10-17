@@ -6,8 +6,6 @@ import com.soen343.tbd.domain.model.ids.BillId;
 import com.soen343.tbd.domain.model.ids.TripId;
 import com.soen343.tbd.domain.model.ids.UserId;
 
-import ch.qos.logback.core.joran.spi.DefaultClass;
-
 public class Bill {
     private BillId billId;
     private Double cost;
