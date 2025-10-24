@@ -14,6 +14,7 @@ import com.soen343.tbd.application.dto.StationDetailsDTO;
 // Link between Observer pattern and SSE implementation - Allows real-time
 // updates
 
+// Concrete observer
 @Component
 public class SSEStationObserver implements StationObserver {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>(); //

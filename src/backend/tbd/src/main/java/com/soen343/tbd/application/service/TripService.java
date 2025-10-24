@@ -57,6 +57,8 @@ public class TripService {
     }
 
     // Allow a user to rent a bike and update all necessary values
+    // Renting a bike modifies system state (map) so need to update map and notify
+    // users
     @Transactional
     public Trip rentBikeService(BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
         logger.info("Starting bike rental process...");
@@ -142,6 +144,8 @@ public class TripService {
         return newTrip;
     }
 
+    // Returning a bike modifies system state (map) so need to update map and notify
+    // users
     @Transactional
     public void returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
         logger.info("Starting bike return process...");
@@ -191,7 +195,7 @@ public class TripService {
             selectedStation.incrementBikesDocked();
             stationRepository.save(selectedStation);
 
-            // All observers
+            // Notify All observers
             notifyAllUsers(selectedStation.getStationId());
 
             logger.info("Updated station bike count from {} to {}", currentBikes, currentBikes + 1);

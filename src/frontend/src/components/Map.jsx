@@ -27,9 +27,10 @@ const Map = ({
     width: "50%",
   };
 
+  // Anything someone (new user or old) loads map
   useEffect(() => {
     const eventSource = new EventSource(
-      "http://localhost:8080/api/stations/stream"
+      "http://localhost:8080/api/stations/stream" // Handled by StationController - user gets added to emitters lsit
     );
 
     eventSource.addEventListener("station-update", (event) => {

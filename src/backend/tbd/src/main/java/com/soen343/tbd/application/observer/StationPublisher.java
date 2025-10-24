@@ -10,6 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 
+// Concrete Subject 
 @Service
 public class StationPublisher implements StationSubject {
     private final List<StationObserver> observers = new ArrayList<>();
@@ -20,6 +21,7 @@ public class StationPublisher implements StationSubject {
         SseEmitter emitter = new SseEmitter(60_000L);
         emitters.add(emitter);
 
+        // remove emitter when closes tab or logs out
         emitter.onCompletion(() -> emitters.remove(emitter));
         emitter.onTimeout(() -> emitters.remove(emitter));
         emitter.onError((e) -> emitters.remove(emitter));

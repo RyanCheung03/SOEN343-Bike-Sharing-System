@@ -5,6 +5,7 @@ package com.soen343.tbd.application.observer;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 
 // Define contracts for Publisher (Subject) in Observer pattern
+// Interface - SSEStationObserver implements it
 public interface StationSubject {
     void attach(StationObserver observer); // Subscribe to updates
 

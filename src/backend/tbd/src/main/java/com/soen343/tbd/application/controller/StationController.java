@@ -81,7 +81,7 @@ public class StationController {
     // SSE endpoint for real-time subscription to station updates
     // Persistent connection and automatic notifs when station/dock/bike data
     // changes
-    @GetMapping("/stream")
+    @GetMapping("/stream") // Called when frontend makes thiss request, which happens when user loads map
     public SseEmitter subscribeToStationUpdates() {
         return stationPublisher.subscribe();
     }
