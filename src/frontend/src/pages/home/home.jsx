@@ -153,6 +153,43 @@ const Home = () => {
     }
   };
 
+  // operator can toggle station status
+    const toggleStationStatus = async (stationId, currentStatus) => {
+        const newStatus = currentStatus === "ACTIVE" ? "OUT_OF_SERVICE" : "ACTIVE";
+
+        try {
+            await axios.post('http://localhost:8080/api/operator/stations/status', { 
+                stationId: stationId,
+                status: newStatus
+            });
+            fetchStations();
+        } catch (error) {
+            console.error("Error changing station status:", error);
+            if (error.response?.status === 401) {
+                alert("Unauthorized. Please login again.");
+                handleLogout();
+            } else {
+                alert(`Failed updating station status: ${error.response?.data || error.message}`);
+            }
+        }
+    };
+
+    // operator can rebalance one bike
+    const rebalanceBike = async (rebalanceData) => {
+        try {
+            await axios.post(`http://localhost:8080/api/operator/rebalance`, rebalanceData);
+            fetchStations();
+        } catch (error) {
+            console.error("Error rebalancing bike:", error);
+            if (error.response?.status === 401) {
+                alert("Unauthorized. Please login again.");
+                handleLogout();
+            } else {
+                alert(`Failed rebalancing bike: ${error.response?.data || error.message}`);
+            }
+        }
+    };
+
   /*
         --- Rental Confirmation Logic ---
     */
@@ -370,6 +407,9 @@ const Home = () => {
           onClickShowConfirmReturn={onClickShowConfirmReturn}
           stations={stations}
           setStations={setStations}
+          userRole={role}
+          toggleStationStatus={toggleStationStatus}
+          rebalanceBike={rebalanceBike}
         />
 
         {confirmRental.active && (
