@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
+
 @Service
 public class ReservationService {
 
@@ -32,6 +33,7 @@ public class ReservationService {
     private final BikeRepository bikeRepository;
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
+
 
     public ReservationService(ReservationRepository reservationRepository,
                               BikeRepository bikeRepository,
@@ -50,34 +52,41 @@ public class ReservationService {
     public Reservation createReservation(BikeId bikeId, StationId stationId, UserId userId) {
         logger.info("Starting reservation creation for BikeId={}, StationId={}, UserId={}", 
                     bikeId.value(), stationId.value(), userId.value());
+       
+       try {
+         // Check if user already has an active reservation
+        if (reservationRepository.checkActiveReservationByUserId(userId).isPresent()) {
+            throw new RuntimeException("User already has an active reservation");
+        }
+       } catch (Exception e) {
+            logger.error("New reservation unable to be created...", e.getMessage());
+            throw new RuntimeException("Failed to create reservation", e);
+       }
+
 
         // Fetch entities
         Bike selectedBike = bikeRepository.findById(bikeId)
             .orElseThrow(() -> new RuntimeException("Bike not found: " + bikeId.value()));
         Station selectedStation = stationRepository.findById(stationId)
             .orElseThrow(() -> new RuntimeException("Station not found: " + stationId.value()));
-        // Optional: check user exists
-        userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found: " + userId.value()));
-
-        // Check for existing active reservation
-        Reservation activeReservation = checkActiveReservation(userId);
-        if (activeReservation != null) {
-            throw new RuntimeException("User already has an active reservation");
-        }
-
-        if (selectedBike.getStatus() != BikeStatus.AVAILABLE) {
-            throw new RuntimeException("Bike is not available for reservation");
-        }
+        
+        logger.info("Found bike: {}, station: {}",
+                selectedBike.getBikeId().value(),
+                selectedStation.getStationId().value());
+    
+         // Update bike status
+        selectedBike.setStatus(BikeStatus.RESERVED);
+        bikeRepository.save(selectedBike);  
+        Reservation newReservation= null;
 
         // Create and save reservation
-        Reservation newReservation = null;
         try {
             Timestamp reservedAt = Timestamp.from(Instant.now());
             Timestamp expiresAt = Timestamp.from(Instant.now().plus(5, ChronoUnit.MINUTES));
 
-            newReservation = new Reservation(null, bikeId, stationId, userId, reservedAt, expiresAt);
-            newReservation.setStatus(ReservationStatus.ACTIVE);
+        // Create reservation using domain constructor
+        newReservation = new Reservation(bikeId, stationId, userId, reservedAt, expiresAt);
+newReservation.setStatus(ReservationStatus.ACTIVE);
 
             // Update bike status to RESERVED
             selectedBike.setStatus(BikeStatus.RESERVED);
@@ -106,17 +115,16 @@ public class ReservationService {
         Optional<Reservation> activeReservationOpt = reservationRepository.checkActiveReservationByUserId(userId);
 
         if (activeReservationOpt.isPresent()) {
-            Reservation res = activeReservationOpt.get();
+            Reservation currentReservation = activeReservationOpt.get();
 
             // Expire if past expiry
-            if (res.getExpiresAt().before(Timestamp.from(Instant.now()))) {
-                logger.info("Reservation {} expired, updating status", res.getReservationId());
-                expireReservation(res.getReservationId());
+            if (currentReservation.isExpired()) {
+                expireReservation(currentReservation.getReservationId());
                 return null;
             }
 
-            logger.info("Active reservation found: ReservationId={}", res.getReservationId());
-            return res;
+            logger.info("Active reservation found: ReservationId={}", currentReservation.getReservationId());
+            return currentReservation;
         }
 
         logger.info("No active reservation found for UserId={}", userId.value());
@@ -130,16 +138,16 @@ public class ReservationService {
     public void cancelReservation(ReservationId reservationId) {
         logger.info("Attempting to cancel reservation: ReservationId={}", reservationId.value());
 
-        Reservation reservation = reservationRepository.findById(reservationId)
+        Reservation cancelReservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found: " + reservationId.value()));
 
         try {
-            reservation.cancel();
-            reservationRepository.save(reservation);
+            cancelReservation.cancel();
+            reservationRepository.save(cancelReservation);
 
             // Update bike status
-            Bike bike = bikeRepository.findById(reservation.getBikeId())
-                        .orElseThrow(() -> new RuntimeException("Bike not found: " + reservation.getBikeId().value()));
+            Bike bike = bikeRepository.findById(cancelReservation.getBikeId())
+                        .orElseThrow(() -> new RuntimeException("Bike not found: " + cancelReservation.getBikeId().value()));
             bike.setStatus(BikeStatus.AVAILABLE);
             bikeRepository.save(bike);
 
@@ -154,28 +162,20 @@ public class ReservationService {
     // -------------------------
     @Transactional
     public void expireReservation(ReservationId reservationId) {
-        logger.info("Checking expiration for reservation: ReservationId={}", reservationId.value());
+        Reservation expiredReservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found: " + reservationId.value()));
+        expiredReservation.expire(); // Domain handles ACTIVE check and expiration
+        reservationRepository.save(expiredReservation);
 
-        try {
-            if (reservation.getStatus() == ReservationStatus.ACTIVE &&
-                reservation.getExpiresAt().before(Timestamp.from(Instant.now()))) {
+        // Update bike status if expired
+        if (expiredReservation.getStatus() == ReservationStatus.EXPIRED) {
+            Bike bike = bikeRepository.findById(expiredReservation.getBikeId())
+                    .orElseThrow(() -> new RuntimeException("Bike not found"));
+            bike.setStatus(BikeStatus.AVAILABLE);
+            bikeRepository.save(bike);
 
-                reservation.setStatus(ReservationStatus.EXPIRED);
-
-                Bike bike = bikeRepository.findById(reservation.getBikeId())
-                                .orElseThrow(() -> new RuntimeException("Bike not found: " + reservation.getBikeId().value()));
-                bike.setStatus(BikeStatus.AVAILABLE);
-                bikeRepository.save(bike);
-
-                reservationRepository.save(reservation);
-                logger.info("Reservation {} expired successfully", reservationId.value());
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to expire reservation {}: {}", reservationId.value(), e.getMessage());
+            logger.info("Reservation {} expired, bike set to AVAILABLE", reservationId.value());
         }
     }
 }
-

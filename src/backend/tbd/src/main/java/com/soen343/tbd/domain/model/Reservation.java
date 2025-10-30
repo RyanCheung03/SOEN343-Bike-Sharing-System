@@ -17,6 +17,16 @@ public class Reservation {
     private Timestamp expiresAt;
     private ReservationStatus status;
 
+    public Reservation(BikeId bikeId, StationId startStationId, UserId userId, Timestamp reservedAt, Timestamp expiresAt) {
+    this.bikeId = bikeId;
+    this.startStationId = startStationId;
+    this.userId = userId;
+    this.reservedAt = reservedAt;
+    this.expiresAt = expiresAt;
+    this.status = ReservationStatus.ACTIVE;
+}
+
+
     // Constructor for new active reservation
     public Reservation(ReservationId reservationId, BikeId bikeId, StationId startStationId, UserId userId, Timestamp reservedAt, Timestamp expiresAt) {
         this.reservationId = reservationId;
@@ -69,4 +79,9 @@ public class Reservation {
     public boolean isExpired() {
         return expiresAt.before(new Timestamp(System.currentTimeMillis()));
     }
+
+    public void expire() {
+    this.status = ReservationStatus.EXPIRED; 
+}
+
 }

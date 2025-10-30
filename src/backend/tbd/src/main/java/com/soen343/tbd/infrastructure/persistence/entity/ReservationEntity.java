@@ -2,6 +2,7 @@ package com.soen343.tbd.infrastructure.persistence.entity;
 
 import com.soen343.tbd.domain.model.enums.ReservationStatus;
 import jakarta.persistence.*;
+
 import java.sql.Timestamp;
 
 @Entity
@@ -13,15 +14,15 @@ public class ReservationEntity {
     @Column(name = "reservation_id")
     private Long reservationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "bike_id")
     private BikeEntity bike;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "start_station_id")
     private StationEntity startStation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
@@ -35,25 +36,13 @@ public class ReservationEntity {
     @Column(name = "status")
     private ReservationStatus status;
 
-    // --------------------
-    // Constructors
-    // --------------------
+    // Optional: future link to a Bill or Payment entity
+    // @OneToOne(mappedBy="reservation", cascade=CascadeType.ALL, fetch=FetchType.LAZY)
+    // private BillEntity bill;
+
     public ReservationEntity() {}
 
-    public ReservationEntity(Long reservationId, BikeEntity bike, StationEntity startStation, UserEntity user,
-                             Timestamp reservedAt, Timestamp expiresAt, ReservationStatus status) {
-        this.reservationId = reservationId;
-        this.bike = bike;
-        this.startStation = startStation;
-        this.user = user;
-        this.reservedAt = reservedAt;
-        this.expiresAt = expiresAt;
-        this.status = status;
-    }
-
-    // --------------------
     // Getters and Setters
-    // --------------------
     public Long getReservationId() { return reservationId; }
     public void setReservationId(Long reservationId) { this.reservationId = reservationId; }
 
@@ -75,4 +64,3 @@ public class ReservationEntity {
     public ReservationStatus getStatus() { return status; }
     public void setStatus(ReservationStatus status) { this.status = status; }
 }
-

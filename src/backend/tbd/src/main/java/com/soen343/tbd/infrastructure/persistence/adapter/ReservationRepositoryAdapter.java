@@ -12,6 +12,7 @@ import com.soen343.tbd.infrastructure.persistence.repository.JpaReservationRepos
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
 import com.soen343.tbd.domain.model.enums.ReservationStatus;
+import com.soen343.tbd.infrastructure.persistence.entity.StationEntity;
 
 
 import java.util.Optional;
@@ -46,7 +47,7 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
 
     @Override
     public void save(Reservation reservation) {
-        ReservationEntity reservationEntity = reservationMapper.toEntity(reservation);
+        var reservationEntity = reservationMapper.toEntity(reservation);
 
         if (reservation.getBikeId() != null) {
             BikeEntity bikeReference = entityManager.getReference(BikeEntity.class, reservation.getBikeId().value());
@@ -57,12 +58,14 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
             UserEntity userReference = entityManager.getReference(UserEntity.class, reservation.getUserId().value());
             reservationEntity.setUser(userReference);
         }
+        // Set the starting station relationship if startStationId is present
+        if (reservation.getStartStationId() != null) {
+            StationEntity stationReference = entityManager.getReference(StationEntity.class, reservation.getStartStationId().value());
+            reservationEntity.setStartStation(stationReference);
+        }
+
 
         jpaReservationRepository.save(reservationEntity);
     }
 
-    //@Override
-   // public void deleteById(ReservationId reservationId) {
-   //     jpaReservationRepository.deleteById(reservationId.value());
-   // }
 }
