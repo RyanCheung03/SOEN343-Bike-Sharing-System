@@ -2,18 +2,8 @@ import { Marker, Popup } from "react-leaflet";
 import React, { useState } from 'react';
 import "./StationMarker.css"
 
-
-function StationMarker({ 
-    station, 
-    onClickShowConfirmRental, 
-    activeBikeRental, 
-    onClickShowConfirmReturn, 
-    toggleStationStatus, 
-    userRole, 
-    rebalanceSource,
-    handleRebalanceSource,
-    handleRebalanceTarget 
-}) {
+//added onClickShowConfirmReservation
+function StationMarker({station, onClickShowConfirmRental, activeBikeRental, onClickShowConfirmReturn, onClickShowConfirmReservation,activeReservation,onClickShowCancelReservation}) {
     // State to track the current selected dock
     const [selectedDock, setSelectedDock] = useState(null);
 
@@ -96,12 +86,9 @@ function StationMarker({
                                 </p>
                             </div>
                             
-                            {/* Rent button */}
-                            { selectedDock.bike && 
-                            !(selectedDock.bike?.status === "RESERVED") 
-                            && !activeBikeRental.hasOngoingRental && 
-                            userRole !== "OPERATOR" && 
-                            station.stationStatus === "ACTIVE" && (
+                            {/* Rent button, original */} 
+                            {/* 
+                            { selectedDock.bike && !(selectedDock.bike?.status === "RESERVED") && !activeBikeRental.hasOngoingRental && (
                             <button
                             className="button-19"
                             onClick={() => onClickShowConfirmRental(selectedDock, selectedDock.bike, station)}
@@ -109,6 +96,24 @@ function StationMarker({
                                 Rent This Bike
                             </button>
                             )}
+                            */}
+
+                            {/* Rent button */}
+{selectedDock.bike && !activeBikeRental.hasOngoingRental && (
+  // Allow rent only if:
+  // - The bike is not reserved
+  // - OR the bike is the one the user reserved
+  (!activeReservation.hasActiveReservation || activeReservation.bikeId === selectedDock.bike.bikeId) &&
+  (selectedDock.bike.status !== "RESERVED" || activeReservation?.bikeId === selectedDock.bike.bikeId) && (
+    <button
+      className="button-19"
+      onClick={() => onClickShowConfirmRental(selectedDock, selectedDock.bike, station)}
+    >
+      Rent This Bike
+    </button>
+  )
+)}
+
 
                             {/* Return button */}
                             { activeBikeRental.hasOngoingRental && 
@@ -122,6 +127,35 @@ function StationMarker({
                                     Return Your Bike
                                 </button>
                             )}
+{/* Reserve / Cancel button */}
+{selectedDock.bike && (
+  <>
+    {/* If the user has no active reservation → show Reserve button */}
+    {!activeReservation?.hasActiveReservation && (
+      <button
+        className="button-19-reserve"
+        onClick={() => onClickShowConfirmReservation(selectedDock.bike, station)}
+      >
+        Reserve This Bike
+      </button>
+    )}
+
+    {/* If the user has an active reservation on THIS bike → show Cancel button */}
+    {activeReservation?.hasActiveReservation &&
+     activeReservation.bikeId === selectedDock.bike.bikeId && (
+      <button
+        className="button-19-cancel"
+        onClick={() => onClickShowCancelReservation(selectedDock.bike, station)}
+      >
+        Cancel Reservation
+      </button>
+    )}
+
+    {/* If the user has an active reservation on another bike → no button */}
+  </>
+)}
+
+
 
                             {/* operator retrieve source bike button */}
                             {userRole === "OPERATOR" && 

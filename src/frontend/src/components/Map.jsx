@@ -15,7 +15,10 @@ L.Icon.Default.mergeOptions({
 const Map = ({
   onClickShowConfirmRental,
   activeBikeRental,
-  onClickShowConfirmReturn,
+  onClickShowConfirmReturn, 
+  onClickShowConfirmReservation,
+  onClickShowCancelReservation,
+  activeReservation,
   stations: initialStations,
   toggleStationStatus, 
   userRole, 
@@ -122,6 +125,9 @@ const Map = ({
             rebalanceSource={rebalanceSource}
             handleRebalanceSource={handleRebalanceSource}
             handleRebalanceTarget={handleRebalanceTarget}
+            onClickShowConfirmReservation={onClickShowConfirmReservation}
+            onClickShowCancelReservation={onClickShowCancelReservation}
+            activeReservation={activeReservation}
           />
         ))}
     </MapContainer>
