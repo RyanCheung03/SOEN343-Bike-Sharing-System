@@ -75,8 +75,8 @@ public class ReservationService {
                 selectedStation.getStationId().value());
     
          // Update bike status
-        selectedBike.setStatus(BikeStatus.RESERVED);
-        bikeRepository.save(selectedBike);  
+        //selectedBike.setStatus(BikeStatus.RESERVED);
+        //bikeRepository.save(selectedBike);  
         Reservation newReservation= null;
 
         // Create and save reservation
