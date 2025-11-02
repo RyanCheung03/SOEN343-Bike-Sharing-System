@@ -83,37 +83,71 @@ const [activeReservation, setActiveReservation] = useState({
         fetchActiveReservation(); // added reservation
     }, []);
 
+    // operator can toggle station status
+    const toggleStationStatus = async (stationId, currentStatus) => {
+        const newStatus = currentStatus === "ACTIVE" ? "OUT_OF_SERVICE" : "ACTIVE";
 
+        try {
+            await axios.post('http://localhost:8080/api/operator/stations/status', { 
+                stationId: stationId,
+                status: newStatus
+            });
+            fetchStations();
+        } catch (error) {
+            console.error("Error changing station status:", error);
+            if (error.response?.status === 401) {
+                alert("Unauthorized. Please login again.");
+                handleLogout();
+            } else {
+                alert(`Failed updating station status: ${error.response?.data || error.message}`);
+            }
+        }
+    };
 
+    // operator can rebalance one bike
+    const rebalanceBike = async (rebalanceData) => {
+        try {
+            await axios.post(`http://localhost:8080/api/operator/rebalance`, rebalanceData);
+            fetchStations();
+        } catch (error) {
+            console.error("Error rebalancing bike:", error);
+            if (error.response?.status === 401) {
+                alert("Unauthorized. Please login again.");
+                handleLogout();
+            } else {
+                alert(`Failed rebalancing bike: ${error.response?.data || error.message}`);
+            }
+        }
+    };
 
     // Track time left until reservation expires
-const [timeLeft, setTimeLeft] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(null);
 
-// Update the countdown every second
-useEffect(() => {
-  if (!activeReservation?.expiresAt) {
-    setTimeLeft(null);
-    return;
-  }
+    // Update the countdown every second
+    useEffect(() => {
+        if (!activeReservation?.expiresAt) {
+            setTimeLeft(null);
+            return;
+        }
 
-  const interval = setInterval(() => {
-    const now = new Date();
-    const expiry = new Date(activeReservation.expiresAt);
-    const diffMs = expiry - now;
+        const interval = setInterval(() => {
+            const now = new Date();
+            const expiry = new Date(activeReservation.expiresAt);
+            const diffMs = expiry - now;
 
-    if (diffMs <= 0) {
-      clearInterval(interval);
-      setTimeLeft("Expired");
-      fetchActiveReservation(); // refresh state automatically
-    } else {
-      const minutes = Math.floor(diffMs / 60000);
-      const seconds = Math.floor((diffMs % 60000) / 1000);
-      setTimeLeft(`${minutes}m ${seconds}s`);
-    }
-  }, 1000);
+            if (diffMs <= 0) {
+                clearInterval(interval);
+                setTimeLeft("Expired");
+                fetchActiveReservation(); // refresh state automatically
+            } else {
+                const minutes = Math.floor(diffMs / 60000);
+                const seconds = Math.floor((diffMs % 60000) / 1000);
+                setTimeLeft(`${minutes}m ${seconds}s`);
+            }
+        }, 1000);
 
-  return () => clearInterval(interval);
-}, [activeReservation]);
+        return () => clearInterval(interval);
+    }, [activeReservation]);
 
 // Function to check if user has an active reservation
 const fetchActiveReservation = async () => {
@@ -540,11 +574,18 @@ useEffect(() => {
           )}
 
                 
-                <Map onClickShowConfirmRental={onClickShowConfirmRental} activeBikeRental={activeBikeRental}
-                    onClickShowConfirmReturn={onClickShowConfirmReturn} stations={stations} 
-                    setStations={setStations} onClickShowConfirmReservation={handleShowReservation} 
-                    activeReservation={activeReservation}   onClickShowCancelReservation={() => setShowCancelReservationPopup(true)}
-                   // added reservation
+                <Map
+                    onClickShowConfirmRental={onClickShowConfirmRental}
+                    activeBikeRental={activeBikeRental}
+                    onClickShowConfirmReturn={onClickShowConfirmReturn}
+                    stations={stations}
+                    setStations={setStations}
+                    onClickShowConfirmReservation={handleShowReservation}
+                    activeReservation={activeReservation}
+                    onClickShowCancelReservation={() => setShowCancelReservationPopup(true)}
+                    toggleStationStatus={toggleStationStatus}
+                    userRole={role}
+                    rebalanceBike={rebalanceBike}
                 />
                                 {/* --- Available Bikes for Reservation --- */}
                                 <div style={{ marginTop: "20px" }}>
