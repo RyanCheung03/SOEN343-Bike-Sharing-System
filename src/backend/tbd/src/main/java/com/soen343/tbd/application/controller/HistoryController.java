@@ -3,6 +3,8 @@ package com.soen343.tbd.application.controller;
 import com.soen343.tbd.application.service.HistoryService;
 import com.soen343.tbd.application.dto.TripDetailsDTO;
 import com.soen343.tbd.domain.model.Trip;
+import com.soen343.tbd.domain.model.Bike;
+import com.soen343.tbd.domain.model.enums.BikeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/history")
@@ -36,6 +39,13 @@ public class HistoryController {
             List<TripDetailsDTO> tripResponse = new ArrayList<>();
 
             for (Trip trip : trips) {
+                // Get bike type safely
+                BikeType bikeType = null;
+                if (trip.getBikeId() != null) {
+                    Optional<Bike> bike = historyService.getBikeById(trip.getBikeId().value());
+                    bikeType = bike.get().getBikeType();
+                }
+
                 // Build response DTO with trip details
                 TripDetailsDTO response = new TripDetailsDTO(
                     trip.getTripId().value(),
@@ -46,7 +56,8 @@ public class HistoryController {
                     trip.getStartTime() != null ? trip.getStartTime().toString() : null,
                     trip.getEndTime() != null ? trip.getEndTime().toString() : null,
                     trip.getStatus() != null ? trip.getStatus().toString() : null,
-                    trip.getBillId() != null ? trip.getBillId().value() : null
+                    trip.getBillId() != null ? trip.getBillId().value() : null,
+                    bikeType
                 );
                 tripResponse.add(response);
             }
