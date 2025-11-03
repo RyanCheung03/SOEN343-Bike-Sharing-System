@@ -9,8 +9,11 @@ const History = () => {
     const [searchId, setSearchId] = useState('');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+    const [expandedTrips, setExpandedTrips] = useState({});
+
     const username = localStorage.getItem('username');
 
+    //Load all trips of the logged user on page load
     useEffect(() => {
         loadTrips();
     }, []);
@@ -21,7 +24,15 @@ const History = () => {
             const response = await axios.post('http://localhost:8080/api/history/AllTrips', {
                 userEmail: localStorage.getItem('user_email')
             });
-            setAllTrips(response.data);
+
+            // Sort trips by end time (most recent first)
+            const sortedTrips = response.data.sort((a, b) => {
+                if (!a.endTime) return 1;
+                if (!b.endTime) return -1;
+                return new Date(b.endTime) - new Date(a.endTime);
+            });
+
+            setAllTrips(sortedTrips);
         } catch (err) {
             if (err.response?.status !== 404) {
                 alert('Failed to load trips');
@@ -61,6 +72,13 @@ const History = () => {
 
             return true;
         });
+    };
+
+    const toggleTripDetails = (tripId) => {
+        setExpandedTrips(prev => ({
+            ...prev,
+            [tripId]: !prev[tripId]
+        }));
     };
 
     const filtered = filterTrips();
@@ -104,7 +122,6 @@ const History = () => {
                 </button>
             </div>
 
-            {/* Show the full name of the user*/}
             <h2>Trips for {localStorage.getItem('user_full_name')}</h2>
 
             {loading ? (
@@ -117,15 +134,25 @@ const History = () => {
                     {filtered.map((trip) => (
                         <div key={trip.tripId} style={{margin: '10px 0', padding: '10px', border: '1px solid #ccc'}}>
                             <h3>Trip #{trip.tripId}</h3>
-                            <h3>User: {username}</h3>
-                            <p>Bike: {trip.bikeId || 'N/A'}</p>
-                            <p>Bike Type: {trip.bikeType}</p>
+                            <p>User: {username}</p>
                             <p>From Station: {trip.startStationId || 'N/A'}</p>
                             <p>To Station: {trip.endStationId || 'N/A'}</p>
-                            <p>Start: {trip.startTime || 'N/A'}</p>
-                            <p>End: {trip.endTime || 'N/A'}</p>
-                            <p>Status: {trip.status || 'N/A'}</p>
-                            <p>Bill: {trip.billId || 'N/A'}</p>
+                            <p>Bike Type: {trip.bikeType}</p>
+
+                            {expandedTrips[trip.tripId] && (
+                                <div style={{color: 'red'}}>
+                                    <h4> Detailed view </h4>
+                                    <p>Start Time: {trip.startTime || 'N/A'}</p>
+                                    <p>End Time: {trip.endTime || 'N/A'}</p>
+                                    <p>Duration: {Math.round((new Date(trip.endTime) - new Date(trip.startTime)) / 60000)} minutes</p>
+                                    <p>Status: {trip.status || 'N/A'}</p>
+                                    <p>Bill ID: {trip.billId || 'N/A'}</p>
+                                </div>
+                            )}
+
+                            <button onClick={() => toggleTripDetails(trip.tripId)}>
+                                {expandedTrips[trip.tripId] ? 'View Less details' : 'Select trip'}
+                            </button>
                         </div>
                     ))}
                 </div>
