@@ -207,7 +207,8 @@ public class TripService {
         // Complete the given trip and compute the bill
         Bill resultingBill = null;
         try {
-            resultingBill = currentTrip.endTrip(selectedStation.getStationId());
+            //resultingBill = currentTrip.endTrip(selectedStation.getStationId());
+            resultingBill = currentTrip.endTrip(selectedStation.getStationId(), selectedBike.getBikeType());
             tripRepository.save(currentTrip);
             logger.info("Trip saved successfully");
         } catch (Exception e) {

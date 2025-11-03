@@ -8,6 +8,11 @@ import com.soen343.tbd.domain.model.ids.BillId;
 import com.soen343.tbd.domain.model.ids.StationId;
 import com.soen343.tbd.domain.model.ids.TripId;
 import com.soen343.tbd.domain.model.ids.UserId;
+import com.soen343.tbd.domain.model.enums.BikeType; 
+import com.soen343.tbd.domain.model.pricing.PricingStrategy;
+import com.soen343.tbd.domain.model.pricing.EBikePricing;
+import com.soen343.tbd.domain.model.pricing.StandardBikePricing;
+
 
 public class Trip {
     private TripId tripId;
@@ -62,12 +67,35 @@ public class Trip {
         this.endTime = new Timestamp(System.currentTimeMillis());
         this.status = TripStatus.COMPLETED;
 
-        // Create the Bill automatically
+        // Create the Bill automatically 
         Bill bill = new Bill(this); // Bill constructor computes cost automatically
         this.billId = bill.getBillId(); // store the BillId in the Trip
 
         return bill; // return the Bill so the caller can persist it
     }
+//New to include pricing Plan
+public Bill endTrip(StationId endStationId, BikeType bikeType) {
+    if (this.status == TripStatus.COMPLETED) {
+        throw new IllegalStateException("Trip is already completed.");
+    }
+
+    this.endStationId = endStationId;
+    this.endTime = new Timestamp(System.currentTimeMillis());
+    this.status = TripStatus.COMPLETED;
+
+    // 💡 Choose correct pricing strategy
+    PricingStrategy strategy;
+    if (bikeType == BikeType.E_BIKE) {
+        strategy = new EBikePricing();
+    } else {
+        strategy = new StandardBikePricing();
+    }
+
+    Bill bill = new Bill(this, strategy);
+    this.billId = bill.getBillId();
+
+    return bill;
+}
 
     /* 
     -----------------------

@@ -5,12 +5,14 @@ import java.sql.Timestamp;
 import com.soen343.tbd.domain.model.ids.BillId;
 import com.soen343.tbd.domain.model.ids.TripId;
 import com.soen343.tbd.domain.model.ids.UserId;
+import com.soen343.tbd.domain.model.pricing.PricingStrategy;
 
 public class Bill {
     private BillId billId;
     private Double cost;
     private TripId tripId;
     private UserId userId;
+    private PricingStrategy pricingStrategy;
 
     // cost per minute
     private static final double COST_PER_MINUTE = 0.5;
@@ -23,20 +25,31 @@ public class Bill {
         this.cost = calculateCost(trip.getStartTime(), trip.getEndTime());
     }
 
+    // Constructor for riders with a pricing strategy
+    public Bill(Trip trip, PricingStrategy pricingStrategy) {
+        this.billId = null;
+        this.tripId = trip.getTripId();
+        this.userId = trip.getUserId();
+        this.pricingStrategy = pricingStrategy;
+        this.cost = calculateCost(trip.getStartTime(), trip.getEndTime());
+    }
+
     // Default Constructor since there is ambiguity with constructors for BillMapper
     public Bill() {
 
     }
-
-    // Method to calculate cost from start and end timestamps
+  
+    // Method to calculate cost from start and end timestamps with a plan
     private Double calculateCost(Timestamp startTime, Timestamp endTime) {
         if (startTime == null || endTime == null) {
             return 0.0; // Trip hasn't ended yet
         }
         // Duration in minutes
         long durationMillis = endTime.getTime() - startTime.getTime();
-        double durationMinutes = durationMillis / 60000.0;
-        return durationMinutes * COST_PER_MINUTE;
+        long durationMinutes = durationMillis / 60000; // integer division, automatically long
+        //return durationMinutes * COST_PER_MINUTE;
+        return pricingStrategy.calculateCost(durationMinutes); //include pricing
+
     }
 
     /* 

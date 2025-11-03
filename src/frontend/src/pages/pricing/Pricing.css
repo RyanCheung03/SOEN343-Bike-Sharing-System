@@ -1,0 +1,24 @@
+.pricing-cards {
+    display: flex;
+    gap: 24px;         /* slightly bigger spacing */
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pricing-card {
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 24px;     /* slightly bigger padding */
+    min-width: 220px;
+    max-width: 280px;  /* constrain max width for large screens */
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); /* slightly stronger shadow */
+}
+
+@media (max-width: 600px) {
+    .pricing-card {
+        min-width: 100%;
+        max-width: 100%;
+    }
+}
+
