@@ -5,29 +5,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.soen343.tbd.application.dto.DockUpdateContextDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
+import com.soen343.tbd.application.dto.StationDetailsDTO.DockWithBikeDTO;
+import com.soen343.tbd.application.service.TripService;
 
 // Concrete Subject 
 @Service
 public class StationPublisher implements StationSubject {
+    private static final Logger logger = LoggerFactory.getLogger(StationPublisher.class);
     private final List<StationObserver> observers = new ArrayList<>();
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
-
-    // SSE subscription for riders (frontend)
-    public SseEmitter subscribe() {
-        SseEmitter emitter = new SseEmitter(60_000L);
-        emitters.add(emitter);
-
-        // remove emitter when closes tab or logs out
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> emitters.remove(emitter));
-        emitter.onError((e) -> emitters.remove(emitter));
-
-        return emitter;
-    }
 
     @Override
     public void attach(StationObserver observer) {
@@ -41,28 +33,53 @@ public class StationPublisher implements StationSubject {
 
     @Override
     public void notifyObservers(StationDetailsDTO station) {
+        logger.debug("Notifying {} observers about station update", observers.size());
         // Notify all observers
         for (StationObserver observer : observers) {
-            observer.update(station);
+            try {
+                observer.update(station);
+            } catch (Exception e) {
+                logger.error("Error notifying observer: " + e.getMessage());
+            }
         }
-
-        // send SSE updates to all connected frontend clients
-        sendSSEUpdate(station);
     }
 
     private void sendSSEUpdate(StationDetailsDTO station) {
         List<SseEmitter> deadEmitters = new ArrayList<>();
+        List<DockWithBikeDTO> docks = station.getDocks();
 
         emitters.forEach(emitter -> {
             try {
+                // Send station-level update
                 emitter.send(SseEmitter.event()
-                        .name("station-update")
-                        .data(station));
-            } catch (IOException e) {
+                    .name("station-update")
+                    .data(station));
+
+                // Send individual dock updates with context
+                for (DockWithBikeDTO dock : docks) {
+                    DockUpdateContextDTO dockUpdate = new DockUpdateContextDTO(
+                        station.getStationId(),
+                        station.getStationName(),
+                        dock
+                    );
+                    emitter.send(SseEmitter.event()
+                        .name("dock-update")
+                        .data(dockUpdate));
+                }
+            } catch (Exception e) {
                 deadEmitters.add(emitter);
+                logger.warn("Failed to send update to emitter: " + e.getMessage());
+                try {
+                    emitter.complete();
+                } catch (Exception ex) {
+                    logger.error("Failed to complete dead emitter: " + ex.getMessage());
+                }
             }
         });
 
-        emitters.removeAll(deadEmitters);
+        if (!deadEmitters.isEmpty()) {
+            emitters.removeAll(deadEmitters);
+            logger.info("Removed {} dead emitters", deadEmitters.size());
+        }
     }
 }

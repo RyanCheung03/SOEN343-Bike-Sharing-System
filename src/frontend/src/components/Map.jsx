@@ -27,10 +27,10 @@ const Map = ({
   // Center of the map, where the map will render first essentially
   const center = [45.552648, -73.681342]; // These are the coords of Montreal, kinda (found online)
   const [stations, setStations] = useState(initialStations || []);
-  // Map size, Leaflet needs a fixed height (forced) or it wont appear
-  const size = {
+  // Map size and other styles, Leaflet needs a fixed height (forced) or it wont appear
+  const style = {
     height: "500px",
-    width: "50%",
+    zIndex: 0
   };
 
   // bike source for rebalancing, done across whole map so that it works across stations
@@ -40,6 +40,10 @@ const Map = ({
       sourceDockId: null,
       sourceStationId: null
   });
+
+  useEffect(() => {
+    setStations(initialStations || []);
+  }, [initialStations]);
 
   // setting bike source for rebalancing
   const handleRebalanceSource = (bike, dock, stationId) => {
@@ -70,41 +74,8 @@ const Map = ({
       }
   };
 
-
-  // Anything someone (new user or old) loads map
-  useEffect(() => {
-    const eventSource = new EventSource(
-      "http://localhost:8080/api/stations/stream" // Handled by StationController - user gets added to emitters lsit
-    );
-
-    eventSource.addEventListener("station-update", (event) => {
-      const updatedStation = JSON.parse(event.data);
-
-      // Update the stations state with the new station data
-      setStations((prevStations) =>
-        prevStations.map((station) =>
-          station.stationId === updatedStation.stationId
-            ? updatedStation
-            : station
-        )
-      );
-    });
-    eventSource.onerror = (error) => {
-      console.error("SSE error:", error);
-    };
-
-    // Cleanup function - runs when component unmounts
-    return () => {
-      eventSource.close();
-    };
-  }, []);
-
-  useEffect(() => {
-    setStations(initialStations || []);
-  }, [initialStations]);
-
   return (
-    <MapContainer center={center} zoom={11} style={size}>
+    <MapContainer center={center} zoom={11} style={style}>
       {/* Maps generally use tiles so they dont have to render the whole world and only what fits in the map display, hence this import by Leaflet for rendering*/}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
