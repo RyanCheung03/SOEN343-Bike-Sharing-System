@@ -79,16 +79,13 @@ public class ReservationService {
                 selectedBike.getBikeId().value(),
                 selectedStation.getStationId().value());
     
-         // Update bike status
-        //selectedBike.setStatus(BikeStatus.RESERVED);
-        //bikeRepository.save(selectedBike);  
         Reservation newReservation= null;
 
 
         // Create and save reservation
         try {
             Timestamp reservedAt = Timestamp.from(Instant.now());
-            Timestamp expiresAt = Timestamp.from(Instant.now().plus(5, ChronoUnit.MINUTES));
+            Timestamp expiresAt = Timestamp.from(Instant.now().plus(15, ChronoUnit.SECONDS));
 
             // Create reservation using domain constructor
             newReservation = new Reservation(bikeId, stationId, userId, reservedAt, expiresAt);
@@ -162,7 +159,7 @@ public class ReservationService {
             bikeRepository.save(bike);
 
             // Notify
-            // notifyAllUsers(selectedStation.getStationId());
+            notifyAllUsers(cancelReservation.getStartStationId());
 
             logger.info("Reservation {} cancelled successfully", reservationId.value());
         } catch (Exception e) {
@@ -187,6 +184,9 @@ public class ReservationService {
                     .orElseThrow(() -> new RuntimeException("Bike not found"));
             bike.setStatus(BikeStatus.AVAILABLE);
             bikeRepository.save(bike);
+
+            // Notify
+            notifyAllUsers(expiredReservation.getStartStationId());
 
             logger.info("Reservation {} expired, bike set to AVAILABLE", reservationId.value());
         }

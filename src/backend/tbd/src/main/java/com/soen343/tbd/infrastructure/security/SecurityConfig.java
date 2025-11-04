@@ -58,7 +58,7 @@ public class SecurityConfig {
                         // the only allowed endpoints without authentication ( can be accessed without a
                         // token)
                         .requestMatchers("/api/login", "/api/register").permitAll()
-                        .requestMatchers("/api/stations/stream").permitAll()
+                        .requestMatchers("/api/stations/stream", "/api/stations/subscribe").permitAll()
                         // all other endpoints require authentication
                         .anyRequest().authenticated())
                 // If any exception occurs, this will handle it by redirecting to 401
