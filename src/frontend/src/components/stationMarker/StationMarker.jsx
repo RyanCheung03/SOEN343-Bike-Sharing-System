@@ -107,18 +107,29 @@ function StationMarker({
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <div>
                                 <h4>Dock {selectedDock.dockId}</h4>
-                                <p style={{ margin: "0.3em" }}>
-                                Bike ID: {selectedDock.bike?.bikeId || "None"}
-                                <br />
-                                Bike Status: {selectedDock.bike?.status || "EMPTY"}
-                                <br />
-                                Bike Type: {selectedDock.bike?.bikeType || "NONE"}
-                                </p>
+                                
+                                {/* If out of service, show warning instead of bike info */}
+                                {selectedDock.dockStatus === "OUT_OF_SERVICE" && (
+                                    <p style={{ color: "red" }}>This dock is currently out of service.</p>
+                                )}
+                                 
+                                {selectedDock.dockStatus !== "OUT_OF_SERVICE" && (
+                                    <p style={{ margin: "0.3em" }}>
+                                        Dock Status: {selectedDock.dockStatus}
+                                        <br />
+                                        Bike ID: {selectedDock.bike?.bikeId || "None"}
+                                        <br />
+                                        Bike Status: {selectedDock.bike?.status || "EMPTY"}
+                                        <br />
+                                        Bike Type: {selectedDock.bike?.bikeType || "NONE"}
+                                    </p>
+                                )}
                             </div>
                             
 
                             {/* Rent button */}
-                            {selectedDock.bike && !activeBikeRental.hasOngoingRental && userRole !== "OPERATOR" && (
+                            {selectedDock.bike && !activeBikeRental.hasOngoingRental && userRole !== "OPERATOR" && 
+                            selectedDock.dockStatus !== "OUT_OF_SERVICE" && (
                             // Allow rent only if:
                             // - The bike is not reserved
                             // - OR the bike is the one the user reserved
@@ -134,10 +145,8 @@ function StationMarker({
                             )}
 
                             {/* Return button */}
-                            { activeBikeRental.hasOngoingRental && 
-                            selectedDock.dockStatus === "EMPTY" && 
-                            userRole !== "OPERATOR" &&
-                            station.stationStatus === "ACTIVE" && (
+                            { activeBikeRental.hasOngoingRental && selectedDock.dockStatus === "EMPTY" && userRole !== "OPERATOR" &&
+                            station.stationStatus === "ACTIVE" && selectedDock.dockStatus !== "OUT_OF_SERVICE" &&(
                                 <button
                                 className="button-19-return"
                                 onClick={() => onClickShowConfirmReturn(selectedDock, activeBikeRental.bikeId, station)}
@@ -148,7 +157,8 @@ function StationMarker({
 
                             {/* Reserve / Cancel button */}
                             {selectedDock.bike && userRole !== "OPERATOR" && !activeBikeRental.hasOngoingRental &&
-                            (selectedDock.bike.status !== "RESERVED" || activeReservation?.bikeId === selectedDock.bike.bikeId) && (
+                            (selectedDock.bike.status !== "RESERVED" || activeReservation?.bikeId === selectedDock.bike.bikeId) &&
+                            selectedDock.dockStatus !== "OUT_OF_SERVICE" && (
                             <>
                                 {/* If the user has no active reservation → show Reserve button */}
                                 {!activeReservation?.hasActiveReservation && (

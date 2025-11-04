@@ -105,7 +105,7 @@ const Map = ({
             icon = greenDivIcon;
           }
 
-          console.log(`DEBUG: COLOR OF MARKER FOR STATION ${station.stationId}: ${ratio}`)
+          // console.log(`DEBUG: COLOR OF MARKER FOR STATION ${station.stationId}: ${ratio}`)
           return (
             <StationMarker
               key={`${station.stationId}-${activeBikeRental.bikeId || "none"}`}
