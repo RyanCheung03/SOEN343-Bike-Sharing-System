@@ -11,5 +11,5 @@ public interface TripRepository {
 
     Optional<Trip> findById(TripId tripId);
 
-    void save(Trip trip);
+    Trip save(Trip trip);
 }

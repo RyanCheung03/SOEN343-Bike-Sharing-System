@@ -1,12 +1,17 @@
 package com.soen343.tbd.application.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.soen343.tbd.domain.model.enums.BikeType;
+import com.soen343.tbd.domain.model.pricing.EBikePricing;
+import com.soen343.tbd.domain.model.pricing.StandardBikePricing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.soen343.tbd.application.dto.StationDetailsDTO;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.*;
 import com.soen343.tbd.domain.model.enums.BikeStatus;
@@ -128,13 +133,14 @@ public class TripService {
         // Create and save the trip
         Trip newTrip = null;
         try {
-            newTrip = new Trip(null, bikeId, userId, stationId);
-            tripRepository.save(newTrip);
-            logger.info("Trip saved successfully");
+            if (selectedBike.getBikeType().equals(BikeType.E_BIKE)) {
+                newTrip = new Trip(null, bikeId, userId, stationId, new EBikePricing());
+            } else {
+                newTrip = new Trip(null, bikeId, userId, stationId, new StandardBikePricing());
+            }
 
-            // Retrieve the generated trip with its generated
-            newTrip = tripRepository.checkRentalsByUserId(userId)
-                    .orElse(null);
+            newTrip = tripRepository.save(newTrip);
+            logger.info("Trip saved successfully");
         } catch (Exception e) {
             logger.warn("New Trip unable to be created", e);
             throw new RuntimeException("Failed to create trip during rent", e);
@@ -147,7 +153,7 @@ public class TripService {
     // Returning a bike modifies system state (map) so need to update map and notify
     // users
     @Transactional
-    public void returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
+    public Map<String, Object> returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
         logger.info("Starting bike return process...");
         logger.info("BikeId: {}, DockId: {}, UserId: {}, StationId: {}",
                 bikeId.value(), dockId.value(), userId.value(), stationId.value());
@@ -207,8 +213,7 @@ public class TripService {
         // Complete the given trip and compute the bill
         Bill resultingBill = null;
         try {
-            //resultingBill = currentTrip.endTrip(selectedStation.getStationId());
-            resultingBill = currentTrip.endTrip(selectedStation.getStationId(), selectedBike.getBikeType());
+            resultingBill = currentTrip.endTrip(selectedStation.getStationId());
             tripRepository.save(currentTrip);
             logger.info("Trip saved successfully");
         } catch (Exception e) {
@@ -218,7 +223,7 @@ public class TripService {
 
         // Persist the resulting bill from the trip
         try {
-            billRepository.save(resultingBill);
+            resultingBill = billRepository.save(resultingBill);
             logger.info("Bill assigned and saved successfully");
         } catch (Exception e) {
             logger.warn("New Bill unable to be created", e);
@@ -226,6 +231,19 @@ public class TripService {
         }
 
         logger.info("Bike return completed successfully!");
+
+        // Fetch station names
+        Station startStation = stationRepository.findById(currentTrip.getStartStationId())
+                .orElseThrow(() -> new RuntimeException("Start station not found with ID: " + currentTrip.getStartStationId().value()));
+        Station endStation = selectedStation; // We already have the end station from above
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("resultingTrip", currentTrip);
+        response.put("resultingBill", resultingBill);
+        response.put("startStationName", startStation.getStationName());
+        response.put("endStationName", endStation.getStationName());
+        response.put("pricingStrategy", currentTrip.getPricingStrategy());
+        return response;
     }
 
     private void notifyAllUsers(StationId stationId) {
