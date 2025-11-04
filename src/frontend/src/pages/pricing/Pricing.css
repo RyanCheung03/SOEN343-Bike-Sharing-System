@@ -1,24 +1,50 @@
-.pricing-cards {
-    display: flex;
-    gap: 24px;         /* slightly bigger spacing */
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.pricing-card {
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 24px;     /* slightly bigger padding */
-    min-width: 220px;
-    max-width: 280px;  /* constrain max width for large screens */
+.pricing-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12); /* slightly stronger shadow */
-}
-
-@media (max-width: 600px) {
-    .pricing-card {
-        min-width: 100%;
-        max-width: 100%;
-    }
-}
-
+  }
+  
+  .pricing-cards {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+  
+  .pricing-card {
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 1.5rem;
+    width: 250px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px #00000022;
+  }
+  
+  .pricing-card h2 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .pricing-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    text-align: left;
+  }
+  
+  .pricing-card ul li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .pricing-note {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  

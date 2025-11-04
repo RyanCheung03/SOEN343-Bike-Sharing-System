@@ -8,7 +8,7 @@ public class PricingPlanDTO {
 
     public PricingPlanDTO() {}
 
-    public PricingPlanDTO(String planName, double baseFee, double perMinuteRate, double eBikeSurcharge) {
+    public PricingPlanDTO(String planName, double baseFee, double perMinuteRate, double eBikeSurcharg) {
         this.planName = planName;
         this.baseFee = baseFee;
         this.perMinuteRate = perMinuteRate;
