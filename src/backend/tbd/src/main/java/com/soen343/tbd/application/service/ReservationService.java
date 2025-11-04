@@ -115,7 +115,7 @@ public class ReservationService {
                 "Reservation created",
                 EntityStatus.NONE,
                 EntityStatus.RES_ACTIVE,
-                "System");
+                "User_"+userId.value());
             
             // Create event for bike status change
             eventService.createEventForEntity(
@@ -124,7 +124,7 @@ public class ReservationService {
                 "Bike reserved",
                 EntityStatus.AVAILABLE,
                 EntityStatus.RESERVED,
-                "System");
+                "User_"+userId.value());
 
             // Notify all observers about station update
             notifyAllUsers(selectedStation.getStationId());
