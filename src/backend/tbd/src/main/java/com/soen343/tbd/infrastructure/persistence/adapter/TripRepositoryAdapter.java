@@ -56,6 +56,14 @@ public class TripRepositoryAdapter implements TripRepository {
     }
 
     @Override
+    public List<Trip> findAllTrips() {
+        return jpaTripRepository.findAll()
+                .stream()
+                .map(tripMapper::toDomain)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     public Trip save(Trip trip) {
         var tripEntity = tripMapper.toEntity(trip);
 

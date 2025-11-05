@@ -36,6 +36,12 @@ public class HistoryService {
 
         return tripRepository.findTripByEmail(email);
     }
+
+    // Get all trips (for operators)
+    public List<Trip> getAllTrips() {
+        return tripRepository.findAllTrips();
+    }
+
     public Optional<Bike> getBikeById(Long bikeId) {
         BikeId domainBikeId = new BikeId(bikeId);
 

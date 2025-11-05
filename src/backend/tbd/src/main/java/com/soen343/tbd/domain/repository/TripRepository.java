@@ -16,5 +16,7 @@ public interface TripRepository {
 
     List<Trip> findTripByEmail(String email);
 
+    List<Trip> findAllTrips();
+
     Trip save(Trip trip);
 }
