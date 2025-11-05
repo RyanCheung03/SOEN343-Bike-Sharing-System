@@ -21,6 +21,7 @@ export default function Legend() {
             <span className="legend-label">{item.label}</span>
           </div>
         ))}
+        <span className="legend-label">Bike Type: E_BIKE and STANDARD have different pricing, please look out</span>
       </div>
     </div>
   );
