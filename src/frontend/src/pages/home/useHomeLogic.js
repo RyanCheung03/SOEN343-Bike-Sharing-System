@@ -8,6 +8,7 @@ export default function useHomeLogic() {
     const [loadingMessage, setLoadingMessage] = useState('');
     const [retryCount, setRetryCount] = useState(0);
     const [isConnected, setIsConnected] = useState(false);
+    const [operatorEvents, setOperatorEvents] = useState([]) // for operator console
 
     // Constants for SSE reconnection
     const MAX_RETRIES = 5;
@@ -145,6 +146,20 @@ export default function useHomeLogic() {
             });
         });
 
+        // Handle operator events
+        eventSource.addEventListener('operator-event', (event) => {
+            const eventData = JSON.parse(event.data);
+            console.log('OPERATOR EVENT RECEIVED:', eventData);
+            
+            // Store operator events for the console
+            setOperatorEvents(prev => [eventData, ...prev].slice(0, 50));
+        });
+
+        // Handle connection events
+        eventSource.addEventListener('connected', (event) => {
+            console.log('SSE connected event:', event.data);
+        });
+
         // Error handling with auto-reconnect
         eventSource.onerror = (error) => {
             console.error('SSE connection error:', error);
@@ -230,6 +245,41 @@ export default function useHomeLogic() {
             }
         });
     };
+
+    // operator events sse
+    // useEffect (() => {
+    //     if (role !== 'OPERATOR') {console.log("Not an operator, returning."); return;} // only for operators
+        
+    //     let operatorEventSource = null;
+
+    //     try {
+    //         operatorEventSource = new EventSource('http://localhost:8080/api/events/subscribe', {
+    //             withCredentials:true
+    //         });
+
+    //         operatorEventSource.onopen = () => {
+    //             console.log("Operator events SSE connection established.");
+    //         };
+
+    //         operatorEventSource.addEventListener('operator-event', (event) => {
+    //             const eventData = JSON.parse(event.data);
+    //             console.log('OPERATOR EVENT:', eventData);
+
+    //             // for now only keep last 25 events
+    //             setOperatorEvents(prev => [eventData, ...prev].slice(0, 50));
+    //         })
+
+    //         operatorEventSource.onerror = (e) => {
+    //             console.log("Operator events error:");
+    //         };
+
+    //     } catch (e) {console.error("Failed to establish operator events SSE connection.");}
+
+    //     return () => {
+    //         if (operatorEventSource)
+    //             operatorEventSource.close();
+    //     };
+    // }, [role]);
 
     const rebalanceBike = async (rebalanceData) => {
         await withLoading('Rebalancing bike...', async () => {
@@ -552,5 +602,6 @@ export default function useHomeLogic() {
         handleBikeMaintain,
         handleRemoveFromMaintenance,
         setActiveBikeMaintenanceRemoval
+        operatorEvents
     };
 }
