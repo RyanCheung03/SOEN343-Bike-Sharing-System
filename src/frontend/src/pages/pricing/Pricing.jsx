@@ -3,16 +3,23 @@ import { useNavigate } from "react-router-dom";
 import Map from '../../components/Map';
 import "./Pricing.css";
 
+const GuestInfoBubble = () => {
+    const [isOpen, setIsOpen] = useState(false);
+  }
 const Pricing = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stations, setStations] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
+  
   const planData = [
     { planType: "STANDARD", baseFee: 1.0, costPerMinute: 0.5 },
     { planType: "E-BIKE", baseFee: 3.0, costPerMinute: 0.35 }
   ];
+
+ 
 
   const planColors = {
     STANDARD: "#6C63FF",
@@ -98,7 +105,12 @@ const Pricing = () => {
         </div>
 
         <div style={{ flex: 1, textAlign: "left", minWidth: "250px" }}>
-          <h2>About BikersDream</h2>
+        <h3>About BikeShare</h3>
+  <p>
+    BikeShare is a low-cost, eco-friendly system that lets you pick up and drop off bikes at any station around the city.
+    Explore stations, see bike availability, and learn how to ride responsibly.
+  </p>
+          <h2>How it works</h2>
 <div className="info-section">
   <p>
     <strong>Find a bike near you:</strong><br /><br />
@@ -113,6 +125,28 @@ const Pricing = () => {
     Instantly view your trip summary, duration, and charges for transparent pricing. Operators can easily monitor station occupancy, rebalance bikes, and ensure smooth operations in real-time. And of course, ride safely and sustainably while exploring the city! 💵🛠️🌿
   </p>
 </div>
+<div className="info-bubble-container">
+      {/* Bubble button */}
+      <div
+        className="info-bubble-button"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Click to view info"
+      >
+        ℹ
+      </div>
+
+      {/* Expandable panel */}
+      {isOpen && (
+        <div className="info-bubble-panel">
+          <h3>Related Information</h3>
+          <p>
+          As a Guest, you can explore station occupancy, pricing plans, bike availability, and helpful system tips...     all without creating an account.          </p>
+          <p>
+          Sign up for free to reserve a bike or start riding and enjoy the full BikersDream experience!          </p>
+        </div>
+      )}
+    </div>
+
 
         </div>
       </div>
