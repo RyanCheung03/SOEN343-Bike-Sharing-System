@@ -2,6 +2,14 @@ import React, { useState, useEffect } from "react";
 import "./OperatorConsole.css";
 
 const OperatorConsole = ({ operatorEvents = [] }) => {
+  // debuggings
+  useEffect(() => {
+    console.log("Operator Console - Current events:", operatorEvents);
+    if (operatorEvents.length > 0) {
+      console.log("Latest event:", operatorEvents[0]);
+    }
+  }, [operatorEvents]);
+
   return (
     <div className="operator-console">
       <h3 className="console-title">Events Console</h3>

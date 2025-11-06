@@ -7,14 +7,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
-
 
 // Concrete Subject 
 @Service
 public class StationPublisher implements StationSubject {
     private static final Logger logger = LoggerFactory.getLogger(StationPublisher.class);
     private final List<StationObserver> observers = new ArrayList<>();
+    private final SSEStationObserver sseStationObserver;
+
+    public StationPublisher(SSEStationObserver sseStationObserver) {
+        this.sseStationObserver = sseStationObserver;
+    }
 
     @Override
     public void attach(StationObserver observer) {
@@ -37,5 +42,10 @@ public class StationPublisher implements StationSubject {
                 logger.error("Error notifying observer: " + e.getMessage());
             }
         }
+    }
+
+    public void notifyOperatorEvent(EventDTO event) {
+        logger.debug("Notifying about operator event: {}", event.getDescription());
+        sseStationObserver.sendOperatorEvent(event);
     }
 }

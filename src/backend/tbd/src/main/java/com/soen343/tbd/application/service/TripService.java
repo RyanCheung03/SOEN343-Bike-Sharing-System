@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.*;
@@ -15,6 +16,7 @@ import com.soen343.tbd.domain.model.enums.DockStatus;
 import com.soen343.tbd.domain.model.enums.EntityType;
 import com.soen343.tbd.domain.model.enums.EntityStatus;
 import com.soen343.tbd.domain.model.ids.*;
+import com.soen343.tbd.domain.model.user.User;
 import com.soen343.tbd.domain.repository.*;
 
 import jakarta.persistence.Entity;
@@ -31,10 +33,11 @@ public class TripService {
     private final StationSubject stationPublisher;
     private final StationService stationService;
     private final EventService eventService;
+    private final UserService userService;
 
     public TripService(BillRepository billRepository, TripRepository tripRepository, BikeRepository bikeRepository,
             DockRepository dockRepository, StationRepository stationRepository, StationSubject stationPublisher,
-            StationService stationService, EventService eventService) {
+            StationService stationService, EventService eventService, UserService userService) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.bikeRepository = bikeRepository;
@@ -43,6 +46,7 @@ public class TripService {
         this.stationPublisher = stationPublisher;
         this.stationService = stationService;
         this.eventService = eventService;
+        this.userService = userService;
     }
 
     // Check if a user currently has a bike rented
@@ -108,8 +112,18 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedBike.getStatus());
 
             // Create event for bike rental
-            eventService.createEventForEntity(EntityType.BIKE, bikeId.value(), "Bike rented by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.BIKE, bikeId.value(),
+                    "Bike rented by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
+
+            // create EventDTO on biking a rent to send to the operator console
+            EventDTO bikeRentEvent = new EventDTO("BIKE", String.valueOf(bikeId.value()), "RENTED",
+                    getUserEmail(userId),
+                    String.format("Bike #%d rented from station #%d.", bikeId.value(), stationId.value()),
+                    EntityStatus.fromSpecificStatus(selectedBike.getStatus()).toString(),
+                    BikeStatus.ON_TRIP.toString());
+
+            stationPublisher.notifyOperatorEvent(bikeRentEvent);
 
             logger.info("Updated bike status to ON_TRIP");
         } catch (Exception e) {
@@ -129,8 +143,20 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedDock.getStatus());
 
             // Create event for dock being freed
-            eventService.createEventForEntity(EntityType.DOCK, dockId.value(), "Dock freed by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.DOCK, dockId.value(),
+                    "Dock freed by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
+
+            EventDTO dockFreedEvent = new EventDTO(
+                    "DOCK",
+                    String.valueOf(dockId.value()),
+                    "FREED",
+                    getUserEmail(userId),
+                    String.format("Dock #%d freed at station #%d.", dockId.value(), stationId.value()),
+                    previousStatus != null ? previousStatus.toString() : "UNKNOWN",
+                    DockStatus.EMPTY.toString());
+
+            stationPublisher.notifyOperatorEvent(dockFreedEvent);
 
             logger.info("Updated dock status to EMPTY");
         } catch (Exception e) {
@@ -156,9 +182,20 @@ public class TripService {
                         "Station status changed due to bike rent by UserId: " + userId.value(),
                         previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
             }
-            
+
             // Notify all observers/users
             notifyAllUsers(selectedStation.getStationId());
+
+            EventDTO stationUpdateEvent = new EventDTO(
+                    "STATION",
+                    String.valueOf(stationId.value()),
+                    "BIKE_REMOVED",
+                    getUserEmail(userId),
+                    String.format("Bike removed from station #%d", stationId.value()),
+                    previousStatus != null ? previousStatus.toString() : "UNKNOWN",
+                    EntityStatus.fromSpecificStatus(selectedStation.getStationStatus()).toString());
+
+            stationPublisher.notifyOperatorEvent(stationUpdateEvent);
 
             logger.info("Updated station bike count from {} to {}", currentBikes, currentBikes - 1);
         } catch (Exception e) {
@@ -176,12 +213,24 @@ public class TripService {
             // Retrieve the generated trip with its generated id
             newTrip = tripRepository.checkRentalsByUserId(userId)
                     .orElse(null);
+
+            EventDTO tripStartEvent = new EventDTO(
+                    "TRIP",
+                    String.valueOf(newTrip.getTripId().value()),
+                    "STARTED",
+                    getUserEmail(userId),
+                    String.format("Trip #%d started by %s", newTrip.getTripId().value(), getUserEmail(userId)),
+                    "NONE",
+                    "ONGOING");
+
+            stationPublisher.notifyOperatorEvent(tripStartEvent);
         } catch (Exception e) {
             logger.warn("New Trip unable to be created", e);
             throw new RuntimeException("Failed to create trip during rent", e);
         }
         // Create event for new trip
-        eventService.createEventForEntity(EntityType.TRIP, newTrip.getTripId().value(), "New trip started by UserId: " + userId.value(),
+        eventService.createEventForEntity(EntityType.TRIP, newTrip.getTripId().value(),
+                "New trip started by UserId: " + userId.value(),
                 EntityStatus.NONE, EntityStatus.ONGOING, "User_" + String.valueOf(userId.value()));
 
         logger.info("Bike rental completed successfully!");
@@ -228,6 +277,17 @@ public class TripService {
                     "Bike returned by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
 
+            EventDTO bikeReturnEvent = new EventDTO(
+                    "BIKE",
+                    String.valueOf(bikeId.value()),
+                    "RETURNED",
+                    getUserEmail(userId),
+                    String.format("Bike #%d returned to station #%d", bikeId.value(), stationId.value()),
+                    EntityStatus.fromSpecificStatus(selectedBike.getStatus()).toString(),
+                    BikeStatus.AVAILABLE.toString());
+
+            stationPublisher.notifyOperatorEvent(bikeReturnEvent);
+
             logger.info("Updated bike status to AVAILABLE");
         } catch (Exception e) {
             logger.warn("Bike unable to be updated/saved", e);
@@ -250,6 +310,17 @@ public class TripService {
                     "Dock occupied by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
 
+            EventDTO dockOccupiedEvent = new EventDTO(
+                    "DOCK",
+                    String.valueOf(dockId.value()),
+                    "OCCUPIED",
+                    getUserEmail(userId),
+                    String.format("Dock #%d occupied at station #%d", dockId.value(), stationId.value()),
+                    EntityStatus.fromSpecificStatus(selectedDock.getStatus()).toString(),
+                    DockStatus.OCCUPIED.toString());
+
+            stationPublisher.notifyOperatorEvent(dockOccupiedEvent);
+
             logger.info("Updated dock status to EMPTY");
         } catch (Exception e) {
             logger.warn("Dock unable to be updated/saved", e);
@@ -269,7 +340,7 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedStation.getStationStatus());
 
             // Create event for station bike count change
-            if(previousStatus != newStatus) {
+            if (previousStatus != newStatus) {
                 eventService.createEventForEntity(EntityType.STATION, stationId.value(),
                         "Station status changed due to bike return by UserId: " + userId.value(),
                         previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
@@ -297,8 +368,20 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
 
             // Create event for trip completion
-            eventService.createEventForEntity(EntityType.TRIP, tripId.value(), "Trip ended by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.TRIP, tripId.value(),
+                    "Trip ended by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
+
+            EventDTO stationReturnEvent = new EventDTO(
+                    "STATION",
+                    String.valueOf(stationId.value()),
+                    "BIKE_ADDED",
+                    getUserEmail(userId),
+                    String.format("Bike added to station #%d", stationId.value()),
+                    EntityStatus.fromSpecificStatus(selectedStation.getStationStatus()).toString(),
+                    EntityStatus.fromSpecificStatus(selectedStation.getStationStatus()).toString());
+
+            stationPublisher.notifyOperatorEvent(stationReturnEvent);
 
             logger.info("Trip saved successfully");
         } catch (Exception e) {
@@ -326,6 +409,11 @@ public class TripService {
         } catch (Exception e) {
             logger.warn("Failed to notify users for station: {}", stationId.value(), e);
         }
+    }
+
+    // helper method
+    private String getUserEmail(UserId userId) {
+        return userService.getUserEmail(userId);
     }
 
 }

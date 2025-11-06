@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.soen343.tbd.application.dto.DockUpdateContextDTO;
+import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO.DockWithBikeDTO;
 
@@ -41,8 +42,8 @@ public class SSEStationObserver implements StationObserver {
         // Send initial heartbeat
         try {
             emitter.send(SseEmitter.event()
-                .name("connected")
-                .data("SSE Connection Established"));
+                    .name("connected")
+                    .data("SSE Connection Established"));
             logger.debug("New SSE connection established. Total connections: {}", emitters.size());
         } catch (Exception e) {
             logger.error("Error sending initial heartbeat: " + e.getMessage());
@@ -67,22 +68,21 @@ public class SSEStationObserver implements StationObserver {
             try {
                 // Send station update first
                 emitter.send(SseEmitter.event()
-                    .name("station-update")
-                    .data(station));
+                        .name("station-update")
+                        .data(station));
                 logger.debug("Sent station update to SSE client");
 
                 // Then send individual dock updates with context
                 for (DockWithBikeDTO dock : docks) {
                     DockUpdateContextDTO dockUpdate = new DockUpdateContextDTO(
-                        station.getStationId(),
-                        station.getStationName(),
-                        dock
-                    );
+                            station.getStationId(),
+                            station.getStationName(),
+                            dock);
                     emitter.send(SseEmitter.event()
-                        .name("dock-update")
-                        .data(dockUpdate));
-                    logger.debug("Sent dock update for station {}, dock {}", 
-                        station.getStationId(), dock.getDockId());
+                            .name("dock-update")
+                            .data(dockUpdate));
+                    logger.debug("Sent dock update for station {}, dock {}",
+                            station.getStationId(), dock.getDockId());
                 }
             } catch (IOException e) {
                 logger.error("Error sending update to SSE client: " + e.getMessage());
@@ -92,8 +92,33 @@ public class SSEStationObserver implements StationObserver {
 
         if (!deadEmitters.isEmpty()) {
             emitters.removeAll(deadEmitters);
-            logger.debug("Removed {} dead SSE connections. Remaining connections: {}", 
-                deadEmitters.size(), emitters.size());
+            logger.debug("Removed {} dead SSE connections. Remaining connections: {}",
+                    deadEmitters.size(), emitters.size());
         }
     }
+
+    // special method only for operators
+    public void sendOperatorEvent(EventDTO event) {
+        if (emitters.isEmpty()) {
+            logger.debug("No active SSE connections to notify.");
+        }
+
+        List<SseEmitter> deadEmitters = new ArrayList<>();
+
+        emitters.forEach(emitter -> {
+            try {
+                emitter.send(SseEmitter.event().name("operator-event").data(event));
+            } catch (IOException ioe) {
+                logger.error("Error sending operator event to SSE client: " + ioe.getMessage());
+                deadEmitters.add(emitter);
+            }
+        });
+
+        if (!deadEmitters.isEmpty()) {
+            emitters.removeAll(deadEmitters);
+            logger.debug("Removed {} dead SSE connections. Remaining connections: {}",
+                    deadEmitters.size(), emitters.size());
+        }
+    }
+
 }

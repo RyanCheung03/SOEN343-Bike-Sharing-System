@@ -117,23 +117,31 @@ export default function useHomeLogic() {
             );
         });
 
+        // Handle operator events
+        eventSource.addEventListener('operator-event', (event) => {
+            const eventData = JSON.parse(event.data);
+            console.log('OPERATOR EVENT RECEIVED:', eventData);
+            
+            // Store operator events for the console
+            setOperatorEvents(prev => [eventData, ...prev].slice(0, 50));
+        });
+
+        // Handle connection events
+        eventSource.addEventListener('connected', (event) => {
+            console.log('SSE connected event:', event.data);
+        });
+
+        eventSource.onerror = (error) => {
+            console.error('SSE connection error:', error);
+            try { eventSource.close(); } catch (e) { /* ignore */ }
+            setIsConnected(false);
+        };
+
         // Error handling with auto-reconnect
         eventSource.onerror = (error) => {
             console.error('SSE connection error:', error);
             try { eventSource.close(); } catch (e) { /* ignore */ }
             setIsConnected(false);
-
-            // Implement exponential backoff for retries by incrementing retryCount,
-            // which will re-run this effect and create a new EventSource.
-            if (retryCount < MAX_RETRIES) {
-                const timeout = RETRY_DELAY * Math.pow(2, retryCount);
-                console.log(`Retrying SSE connection in ${timeout}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-                retryTimer = setTimeout(() => {
-                    setRetryCount(prev => prev + 1);
-                }, timeout);
-            } else {
-                console.error('Max SSE retry attempts reached');
-            }
         };
 
         // Cleanup on component unmount or before re-running effect
@@ -207,39 +215,39 @@ export default function useHomeLogic() {
     };
 
     // operator events sse
-    useEffect (() => {
-        if (role != 'OPERATOR') {return;} // only for operators
+    // useEffect (() => {
+    //     if (role !== 'OPERATOR') {console.log("Not an operator, returning."); return;} // only for operators
         
-        let operatorEventSource = null;
+    //     let operatorEventSource = null;
 
-        try {
-            operatorEventSource = new EventSource('http://localhost:8080/api/events/subscribe', {
-                withCredentials:true
-            });
+    //     try {
+    //         operatorEventSource = new EventSource('http://localhost:8080/api/events/subscribe', {
+    //             withCredentials:true
+    //         });
 
-            operatorEventSource.onopen = () => {
-                console.log("Operator events SSE connection established.");
-            };
+    //         operatorEventSource.onopen = () => {
+    //             console.log("Operator events SSE connection established.");
+    //         };
 
-            operatorEventSource.addEventListener('operator-event', (event) => {
-                const eventData = JSON.parse(event.data);
-                console.log('OPERATOR EVENT:', eventData);
+    //         operatorEventSource.addEventListener('operator-event', (event) => {
+    //             const eventData = JSON.parse(event.data);
+    //             console.log('OPERATOR EVENT:', eventData);
 
-                // for now only keep last 25 events
-                setOperatorEvents(prev => [eventData, ...prev].slice(0, 50));
-            })
+    //             // for now only keep last 25 events
+    //             setOperatorEvents(prev => [eventData, ...prev].slice(0, 50));
+    //         })
 
-            operatorEventSource.onerror = (e) => {
-                console.log("Operator events error:");
-            };
+    //         operatorEventSource.onerror = (e) => {
+    //             console.log("Operator events error:");
+    //         };
 
-        } catch (e) {console.error("Failed to establish operator events SSE connection.");}
+    //     } catch (e) {console.error("Failed to establish operator events SSE connection.");}
 
-        return () => {
-            if (operatorEventSource)
-                operatorEventSource.close();
-        };
-    }, [role]);
+    //     return () => {
+    //         if (operatorEventSource)
+    //             operatorEventSource.close();
+    //     };
+    // }, [role]);
 
     const rebalanceBike = async (rebalanceData) => {
         await withLoading('Rebalancing bike...', async () => {
