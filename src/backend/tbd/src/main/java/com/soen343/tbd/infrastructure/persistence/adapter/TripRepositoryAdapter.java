@@ -1,5 +1,6 @@
 package com.soen343.tbd.infrastructure.persistence.adapter;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -92,5 +93,13 @@ public class TripRepositoryAdapter implements TripRepository {
 
         TripEntity entity = jpaTripRepository.save(tripEntity);
         return tripMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<Trip> findAllByUserId(UserId userId) {
+        List<TripEntity> tripEntities = jpaTripRepository.findAllByUser_UserId(userId.value());
+        return tripEntities.stream()
+                .map(tripMapper::toDomain)
+                .toList();
     }
 }
