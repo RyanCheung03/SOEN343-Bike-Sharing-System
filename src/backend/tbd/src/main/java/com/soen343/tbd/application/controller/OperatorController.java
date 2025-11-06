@@ -76,8 +76,10 @@ public class OperatorController {
     @PostMapping("/maintenance/set")
     public ResponseEntity<?> setBikeForMaintenance(@RequestBody SetMaintenanceDTO setMaintenanceDTO){
         BikeId bikeId = new BikeId(setMaintenanceDTO.getBikeId());
+        StationId stationId = new StationId(setMaintenanceDTO.getStationId());
+
         try {
-            operatorService.setBikeForMaintenance(bikeId);
+            operatorService.setBikeForMaintenance(bikeId, stationId);
             logger.info("Bike with ID: {} set to maintenance", bikeId);
             return ResponseEntity.ok("Bike with ID: " + bikeId + " set to maintenance");
         } catch (IllegalArgumentException e) {
@@ -107,8 +109,10 @@ public class OperatorController {
     public ResponseEntity<?> removeBikeFromMaintenance(@RequestBody RemoveMaintenanceDTO removeMaintenanceDTO){
         BikeId bikeId = new BikeId(removeMaintenanceDTO.getBikeId());
         DockId dockId = new DockId(removeMaintenanceDTO.getDockId());
+        StationId stationId = new StationId(removeMaintenanceDTO.getStationId());
+
         try {
-            operatorService.removeBikeFromMaintenance(bikeId, dockId);
+            operatorService.removeBikeFromMaintenance(bikeId, dockId, stationId);
             logger.info("Bike with ID: {} removed from maintenance", bikeId);
             return ResponseEntity.ok("Bike with ID: " + bikeId + " removed from maintenance");
         } catch (IllegalArgumentException e) {

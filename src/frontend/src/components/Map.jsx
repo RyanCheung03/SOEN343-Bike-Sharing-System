@@ -68,6 +68,11 @@ const Map = ({
       });
   };
 
+  // cancel rebalancing
+  const cancelRebalance = () => {
+      setRebalanceSource({ bikeId: null, sourceDockId: null, sourceStationId: null });
+  };
+
   // rebalance to a target dock, full dto used
   const handleRebalanceTarget = async (targetDock, targetStationId) => {
       if (!rebalanceSource.bikeId) return;
@@ -132,6 +137,7 @@ const Map = ({
               setActiveBikeMaintenanceRemoval={setActiveBikeMaintenanceRemoval}
               activeBikeMaintenanceRemoval={activeBikeMaintenanceRemoval}
               handleRemoveFromMaintenance={handleRemoveFromMaintenance}
+              cancelRebalance={cancelRebalance}
             />
           );
         })};

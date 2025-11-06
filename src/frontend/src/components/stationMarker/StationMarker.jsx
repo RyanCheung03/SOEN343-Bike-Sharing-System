@@ -21,7 +21,8 @@ function StationMarker({
     bikesUnderMaintenance,
     setActiveBikeMaintenanceRemoval,
     activeBikeMaintenanceRemoval,
-    handleRemoveFromMaintenance
+    handleRemoveFromMaintenance,
+    cancelRebalance
 }) {
     // State to track the current selected dock
     const [selectedDock, setSelectedDock] = useState(null);
@@ -52,12 +53,12 @@ function StationMarker({
     // gets bike and source dock/station for rebalancing, retrieve button
     const handleMaintain = (bike) => {
         if (!bike) return;
-        handleBikeMaintain(bike, selectedDock, station.stationId);
+        handleBikeMaintain(bike, station.stationId);
     };
 
     // Handle the removal of a bike from maintenance
     const handleConfirmRemoval = async (bikeId, dock) => {
-        await handleRemoveFromMaintenance(bikeId, dock.dockId);
+        await handleRemoveFromMaintenance(bikeId, dock.dockId, station.stationId);
         setActiveBikeMaintenanceRemoval(null);
     };
 
@@ -224,6 +225,16 @@ function StationMarker({
                                     onClick={() => handleRetrieve(selectedDock)}
                                 >
                                     Retrieve This Bike
+                                </button>
+                            )}
+
+                            {/* Operator cancel rebalancing button */}
+                            {userRole === "OPERATOR" && rebalanceSource.bikeId && (
+                                <button
+                                    className="button-19-cancel"
+                                    onClick={cancelRebalance}
+                                >
+                                    Cancel Rebalancing
                                 </button>
                             )}
 
