@@ -398,6 +398,10 @@ export default function useHomeLogic() {
         navigate('/login?logout=1', { replace: true });
     };
 
+    const handleViewHistory = () => {
+        navigate('/history');
+    };
+
     const handleConfirmRental = async () => {
         setConfirmRental({ active: false, dock: null, bike: null, station: null });
         await withLoading('Processing your rental...', async () => {
@@ -529,6 +533,7 @@ export default function useHomeLogic() {
         showCancelReservationPopup,
         // Actions
         handleLogout,
+        handleViewHistory,
         fetchStations,
         onClickShowConfirmRental: (dock, bike, station) => setConfirmRental({ active: true, dock, bike, station }),
         onClickShowConfirmReturn,

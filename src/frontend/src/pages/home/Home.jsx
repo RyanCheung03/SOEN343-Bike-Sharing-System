@@ -33,6 +33,7 @@ const Home = () => {
         showCancelReservationPopup,
         // actions
         handleLogout,
+        handleViewHistory,
         fetchStations,
         onClickShowConfirmRental,
         onClickShowConfirmReturn,
@@ -106,6 +107,7 @@ const Home = () => {
                 fullName={fullName}
                 role={role}
                 handleLogout={handleLogout}
+                handleViewHistory={handleViewHistory}
             />
 
             <div className="content-wrapper">
