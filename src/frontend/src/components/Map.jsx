@@ -86,7 +86,7 @@ const Map = ({
       {stations &&
         stations.map((station) => (
           <StationMarker
-            key={`${station.stationId}-${activeBikeRental.bikeId || "none"}`}
+            key={`${station.stationId}-${activeBikeRental?.bikeId || "none"}`}
             station={station}
             onClickShowConfirmRental={onClickShowConfirmRental}
             activeBikeRental={activeBikeRental}

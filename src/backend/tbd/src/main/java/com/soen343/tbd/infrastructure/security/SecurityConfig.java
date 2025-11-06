@@ -59,6 +59,8 @@ public class SecurityConfig {
                         // token)
                         .requestMatchers("/api/login", "/api/register").permitAll()
                         .requestMatchers("/api/stations/stream", "/api/stations/subscribe").permitAll()
+                        .requestMatchers("/api/stations/**").permitAll()  // <--- for guests map
+
                         // all other endpoints require authentication
                         .anyRequest().authenticated())
                 // If any exception occurs, this will handle it by redirecting to 401

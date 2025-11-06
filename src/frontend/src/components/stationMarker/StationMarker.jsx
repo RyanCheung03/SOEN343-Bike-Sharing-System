@@ -90,8 +90,8 @@ function StationMarker({
                                         : "bike-box-empty"
                                 } ${selectedDock?.dockId === dock.dockId ? "bike-box-selected" : ""}`}
                                     
-                                onClick={() => setSelectedDock(dock)}
-                            >
+                                onClick={userRole !== "GUEST" ? () => setSelectedDock(dock) : undefined}
+                                >
                             {hasBike ? <span style={{ fontSize: "1.2em" }}>🚲</span> : ""}
                             </div>
                         );
@@ -112,7 +112,7 @@ function StationMarker({
                             
 
                             {/* Rent button */}
-                            {selectedDock.bike && !activeBikeRental.hasOngoingRental && userRole !== "OPERATOR" && (
+                            {selectedDock.bike && !(activeBikeRental?.hasOngoingRental) && userRole !== "OPERATOR" && (
                             // Allow rent only if:
                             // - The bike is not reserved
                             // - OR the bike is the one the user reserved
@@ -134,7 +134,7 @@ function StationMarker({
                             station.stationStatus === "ACTIVE" && (
                                 <button
                                 className="button-19-return"
-                                onClick={() => onClickShowConfirmReturn(selectedDock, activeBikeRental.bikeId, station)}
+                                onClick={() => onClickShowConfirmReturn(selectedDock, activeBikeRental?.bikeId, station)}
                                 >
                                     Return Your Bike
                                 </button>
