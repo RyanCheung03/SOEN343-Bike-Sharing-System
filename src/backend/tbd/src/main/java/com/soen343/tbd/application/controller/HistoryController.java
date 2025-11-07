@@ -69,7 +69,6 @@ public class HistoryController {
         List<TripDetailsDTO> tripResponse = new ArrayList<>();
 
         for (Trip trip : trips) {
-            // Get bike type safely
             BikeType bikeType = null;
             if (trip.getBikeId() != null) {
                 Optional<Bike> bike = historyService.getBikeById(trip.getBikeId().value());
@@ -78,7 +77,6 @@ public class HistoryController {
                 }
             }
 
-            // Get bill cost safely
             Double billCost = null;
             if (trip.getBillId() != null) {
                 Optional<Bill> bill = historyService.getBillById(trip.getBillId().value());
