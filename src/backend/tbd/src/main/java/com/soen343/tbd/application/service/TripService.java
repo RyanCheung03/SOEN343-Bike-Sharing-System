@@ -8,11 +8,14 @@ import java.util.Map;
 import com.soen343.tbd.domain.model.enums.BikeType;
 import com.soen343.tbd.domain.model.pricing.EBikePricing;
 import com.soen343.tbd.domain.model.pricing.StandardBikePricing;
+import com.soen343.tbd.domain.model.user.User;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.soen343.tbd.application.observer.SSEStationObserver;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.*;
 import com.soen343.tbd.domain.model.enums.BikeStatus;
@@ -34,10 +37,13 @@ public class TripService {
     private final StationSubject stationPublisher;
     private final StationService stationService;
     private final EventService eventService;
+    private final SSEStationObserver sseStationObserver;
+    private final UserRepository userRepository;
 
     public TripService(BillRepository billRepository, TripRepository tripRepository, BikeRepository bikeRepository,
             DockRepository dockRepository, StationRepository stationRepository, StationSubject stationPublisher,
-            StationService stationService, EventService eventService) {
+            StationService stationService, EventService eventService, SSEStationObserver sseStationObserver,
+            UserRepository userRepository) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.bikeRepository = bikeRepository;
@@ -46,6 +52,8 @@ public class TripService {
         this.stationPublisher = stationPublisher;
         this.stationService = stationService;
         this.eventService = eventService;
+        this.sseStationObserver = sseStationObserver;
+        this.userRepository = userRepository;
     }
 
     // Check if a user currently has a bike rented
@@ -111,7 +119,8 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedBike.getStatus());
 
             // Create event for bike rental
-            eventService.createEventForEntity(EntityType.BIKE, bikeId.value(), "Bike rented by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.BIKE, bikeId.value(),
+                    "Bike rented by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
 
             logger.info("Updated bike status to ON_TRIP");
@@ -132,7 +141,8 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedDock.getStatus());
 
             // Create event for dock being freed
-            eventService.createEventForEntity(EntityType.DOCK, dockId.value(), "Dock freed by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.DOCK, dockId.value(),
+                    "Dock freed by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
 
             logger.info("Updated dock status to EMPTY");
@@ -185,7 +195,8 @@ public class TripService {
             throw new RuntimeException("Failed to create trip during rent", e);
         }
         // Create event for new trip
-        eventService.createEventForEntity(EntityType.TRIP, newTrip.getTripId().value(), "New trip started by UserId: " + userId.value(),
+        eventService.createEventForEntity(EntityType.TRIP, newTrip.getTripId().value(),
+                "New trip started by UserId: " + userId.value(),
                 EntityStatus.NONE, EntityStatus.ONGOING, "User_" + String.valueOf(userId.value()));
 
         logger.info("Bike rental completed successfully!");
@@ -195,7 +206,8 @@ public class TripService {
     // Returning a bike modifies system state (map) so need to update map and notify
     // users
     @Transactional
-    public Map<String, Object> returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
+    public Map<String, Object> returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId,
+            StationId stationId) {
         logger.info("Starting bike return process...");
         logger.info("BikeId: {}, DockId: {}, UserId: {}, StationId: {}",
                 bikeId.value(), dockId.value(), userId.value(), stationId.value());
@@ -273,7 +285,7 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(selectedStation.getStationStatus());
 
             // Create event for station bike count change
-            if(previousStatus != newStatus) {
+            if (previousStatus != newStatus) {
                 eventService.createEventForEntity(EntityType.STATION, stationId.value(),
                         "Station status changed due to bike return by UserId: " + userId.value(),
                         previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
@@ -301,7 +313,8 @@ public class TripService {
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
 
             // Create event for trip completion
-            eventService.createEventForEntity(EntityType.TRIP, tripId.value(), "Trip ended by UserId: " + userId.value(),
+            eventService.createEventForEntity(EntityType.TRIP, tripId.value(),
+                    "Trip ended by UserId: " + userId.value(),
                     previousStatus, newStatus, "User_" + String.valueOf(userId.value()));
 
             logger.info("Trip saved successfully");
@@ -314,6 +327,8 @@ public class TripService {
         try {
             resultingBill = billRepository.save(resultingBill);
             logger.info("Bill assigned and saved successfully");
+
+            sendCompleteBillToOperators(resultingBill, currentTrip);
         } catch (Exception e) {
             logger.warn("New Bill unable to be created", e);
             throw new RuntimeException("Failed to save bill during return", e);
@@ -323,7 +338,8 @@ public class TripService {
 
         // Fetch station names
         Station startStation = stationRepository.findById(currentTrip.getStartStationId())
-                .orElseThrow(() -> new RuntimeException("Start station not found with ID: " + currentTrip.getStartStationId().value()));
+                .orElseThrow(() -> new RuntimeException(
+                        "Start station not found with ID: " + currentTrip.getStartStationId().value()));
         Station endStation = selectedStation; // We already have the end station from above
 
         Map<String, Object> response = new HashMap<>();
@@ -342,6 +358,56 @@ public class TripService {
             logger.debug("Notified all users about station update: {}", stationId.value());
         } catch (Exception e) {
             logger.warn("Failed to notify users for station: {}", stationId.value(), e);
+        }
+    }
+
+    private void sendCompleteBillToOperators(Bill bill, Trip trip) {
+        try {
+            // Get user information
+            User user = userRepository.findById(bill.getUserId())
+                    .orElse(null);
+            String userEmail = user != null ? user.getEmail() : "Unknown";
+            String userFullName = user != null ? user.getFullName() : "Unknown";
+
+            // Get station information
+            Station startStation = stationRepository.findById(trip.getStartStationId())
+                    .orElse(null);
+            Station endStation = stationRepository.findById(trip.getEndStationId())
+                    .orElse(null);
+
+            String startStationName = startStation != null ? startStation.getStationName() : "Unknown";
+            String endStationName = endStation != null ? endStation.getStationName() : "Unknown";
+
+            // Create bill data to match ryan/nicole's frontend
+            Map<String, Object> billData = new HashMap<>();
+
+            billData.put("billId", bill.getBillId().value());
+            billData.put("tripId", trip.getTripId().value());
+            billData.put("userId", bill.getUserId().value());
+            billData.put("userEmail", userEmail);
+            billData.put("userFullName", userFullName);
+            billData.put("bikeId", trip.getBikeId().value());
+            billData.put("startStationName", startStationName);
+            billData.put("endStationName", endStationName);
+            billData.put("startTime", trip.getStartTime().toString());
+            billData.put("endTime", trip.getEndTime() != null ? trip.getEndTime().toString() : null);
+            billData.put("durationMinutes", Math.round(trip.calculateDurationInMinutes()));
+            billData.put("billStatus", bill.getStatus().name());
+            billData.put("pricingStrategy",
+                    trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPricingTypeName()
+                            : "Standard Bike Pricing");
+            billData.put("baseFare", trip.getPricingStrategy() != null ? trip.getPricingStrategy().getBaseFee() : 0.0);
+            billData.put("perMinuteRate",
+                    trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPerMinuteRate() : 0.0);
+            billData.put("totalAmount", bill.getCost());
+
+            logger.debug("Sending operator bill update: {}", billData);
+
+            // Send via sse for operators
+            sseStationObserver.sendOperatorBillUpdate(billData);
+
+        } catch (Exception e) {
+            logger.error("Error sending complete bill data to operators for bill ID: {}", bill.getBillId().value(), e);
         }
     }
 

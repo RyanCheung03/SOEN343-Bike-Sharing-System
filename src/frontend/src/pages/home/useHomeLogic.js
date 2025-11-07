@@ -496,6 +496,7 @@ export default function useHomeLogic() {
                 alert(`Failed to return bike: ${error.response?.data || error.message}`);
             }
         });
+
     };
 
     const handleBikeMaintain = async (bike, stationId) => {
@@ -535,6 +536,8 @@ export default function useHomeLogic() {
             }
         });
     };
+
+    
 
     return {
         // Loading states
