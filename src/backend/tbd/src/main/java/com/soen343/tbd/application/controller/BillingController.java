@@ -1,5 +1,6 @@
 package com.soen343.tbd.application.controller;
 
+import com.soen343.tbd.application.dto.billing.AllBillingHistoryResponse;
 import com.soen343.tbd.application.dto.billing.UserBillingHistoryResponse;
 import com.soen343.tbd.application.dto.billing.UserPaymentRequest;
 import com.soen343.tbd.application.service.BillingService;
@@ -50,6 +51,21 @@ public class BillingController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+    @GetMapping("/operator/allhistory")
+    public ResponseEntity<AllBillingHistoryResponse> getAllSystemBillingHistory() {
+        logger.info("Received request to get all system billing history");
+
+        try {
+            AllBillingHistoryResponse response = billingService.getAllSystemBillingHistory();
+            logger.info("Successfully retrieved all system billing history");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            logger.error("Failed to retrieve all system billing history. Error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @PostMapping("/user/payment")
     public ResponseEntity<Map<String, Object>> processBillPayment(@RequestBody UserPaymentRequest paymentRequest) {

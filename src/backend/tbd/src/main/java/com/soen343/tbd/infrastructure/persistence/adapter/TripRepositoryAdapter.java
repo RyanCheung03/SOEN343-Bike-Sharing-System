@@ -102,4 +102,12 @@ public class TripRepositoryAdapter implements TripRepository {
                 .map(tripMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Trip> findAll() {
+        List<TripEntity> tripEntities = jpaTripRepository.findAll();
+        return tripEntities.stream()
+                .map(tripMapper::toDomain)
+                .toList();
+    }
 }

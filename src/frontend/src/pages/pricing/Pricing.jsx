@@ -19,8 +19,6 @@ const Pricing = () => {
     { planType: "E-BIKE", baseFee: 3.0, costPerMinute: 0.35 }
   ];
 
- 
-
   const planColors = {
     STANDARD: "#6C63FF",
     "E-BIKE": "#3FC1C9"

@@ -62,4 +62,12 @@ public class BillRepositoryAdapter implements BillRepository {
                 .map(billMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Bill> findAll() {
+        return jpaBillRepository.findAll()
+                .stream()
+                .map(billMapper::toDomain)
+                .toList();
+    }
 }

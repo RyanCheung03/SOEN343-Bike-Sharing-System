@@ -19,6 +19,7 @@ function Billing() {
     });
     const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, price-desc, price-asc
     const [filterStatus, setFilterStatus] = useState('all'); // all, pending, paid
+    const [searchUserId, setSearchUserId] = useState(''); // Search by User ID (operator only)
     const navigate = useNavigate();
 
     // Use the same localStorage keys as Home page
@@ -34,7 +35,12 @@ function Billing() {
             setIsLoading(true);
             const token = localStorage.getItem('jwt_token');
 
-            const response = await fetch('http://localhost:8080/api/billing/user/history', {
+            // Use different endpoint based on user role
+            const endpoint = role === 'OPERATOR'
+                ? 'http://localhost:8080/api/billing/operator/allhistory'
+                : 'http://localhost:8080/api/billing/user/history';
+
+            const response = await fetch(endpoint, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -154,15 +160,28 @@ function Billing() {
     };
 
     const getFilteredAndSortedBills = () => {
-        if (!billingData || !billingData.tripBills) return [];
+        if (!billingData) return [];
 
-        let filteredBills = [...billingData.tripBills];
+        // Handle different data structures for operator vs rider
+        const bills = role === 'OPERATOR'
+            ? (billingData.allTripBills || [])
+            : (billingData.tripBills || []);
+
+        let filteredBills = [...bills];
 
         // Apply status filter
         if (filterStatus === 'pending') {
             filteredBills = filteredBills.filter(bill => bill.billStatus === 'PENDING');
         } else if (filterStatus === 'paid') {
             filteredBills = filteredBills.filter(bill => bill.billStatus === 'PAID');
+        }
+
+        // Apply User ID search filter (only for operators)
+        if (role === 'OPERATOR' && searchUserId.trim() !== '') {
+            const searchValue = searchUserId.trim();
+            filteredBills = filteredBills.filter(bill => {
+                return bill.userId?.toString().includes(searchValue);
+            });
         }
 
         // Apply sorting
@@ -201,14 +220,19 @@ function Billing() {
                 <div className="welcome-section">
                     <div>
                         <h1 className="welcome-title">
-                            {fullName ? (
+                            {role === 'OPERATOR' ? (
+                                'System Billing History'
+                            ) : fullName ? (
                                 `${fullName.split(' ')[0]}'s Billing History`
                             ) : (
                                 'Billing History'
                             )}
                         </h1>
                         <p className="welcome-subtitle">
-                            View your trip history and billing details
+                            {role === 'OPERATOR'
+                                ? 'View all trips and billing details across the system'
+                                : 'View your trip history and billing details'
+                            }
                         </p>
                     </div>
 
@@ -246,6 +270,23 @@ function Billing() {
                                 <option value="paid">Paid Only</option>
                             </select>
                         </div>
+
+                        {/* User ID Search - Only visible for operators */}
+                        {role === 'OPERATOR' && (
+                            <div className="filter-group">
+                                <label htmlFor="search-userid">
+                                    <i className="fas fa-search"></i> Search User ID:
+                                </label>
+                                <input
+                                    id="search-userid"
+                                    type="text"
+                                    placeholder="Enter User ID..."
+                                    value={searchUserId}
+                                    onChange={(e) => setSearchUserId(e.target.value)}
+                                    className="filter-input"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -257,14 +298,27 @@ function Billing() {
                         </h2>
 
                         <div className="billing-content">
-                            {!isLoading && billingData && billingData.tripBills.length === 0 && (
+                            {!isLoading && billingData && (
+                                role === 'OPERATOR'
+                                    ? billingData.allTripBills?.length === 0
+                                    : billingData.tripBills?.length === 0
+                            ) && (
                                 <div className="empty-message">
                                     <i className="fas fa-inbox"></i>
-                                    <p>No trips yet. Start riding to see your billing history!</p>
+                                    <p>
+                                        {role === 'OPERATOR'
+                                            ? 'No trips in the system yet.'
+                                            : 'No trips yet. Start riding to see your billing history!'
+                                        }
+                                    </p>
                                 </div>
                             )}
 
-                            {!isLoading && billingData && billingData.tripBills.length > 0 && (
+                            {!isLoading && billingData && (
+                                role === 'OPERATOR'
+                                    ? billingData.allTripBills?.length > 0
+                                    : billingData.tripBills?.length > 0
+                            ) && (
                                 <div className="trip-bills-list">
                                     {getFilteredAndSortedBills().length === 0 ? (
                                         <div className="empty-message">
@@ -301,6 +355,34 @@ function Billing() {
 
                                             {/* Trip Details */}
                                             <div className="trip-details">
+                                                {role === 'OPERATOR' && (
+                                                    <>
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">
+                                                                <i className="fas fa-id-badge"></i> User ID
+                                                            </span>
+                                                            <span className="detail-value">
+                                                                {tripBill.userId}
+                                                            </span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">
+                                                                <i className="fas fa-user"></i> Rider Name
+                                                            </span>
+                                                            <span className="detail-value">
+                                                                {tripBill.userFullName}
+                                                            </span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">
+                                                                <i className="fas fa-envelope"></i> Email
+                                                            </span>
+                                                            <span className="detail-value">
+                                                                {tripBill.userEmail}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                )}
                                                 <div className="detail-row">
                                                     <span className="detail-label">
                                                         <i className="fas fa-calendar"></i> Date
@@ -347,8 +429,8 @@ function Billing() {
                                                 </div>
                                             </div>
 
-                                            {/* Pay Now Button */}
-                                            {(tripBill.billStatus === 'PENDING') && (
+                                            {/* Pay Now Button - Only show for riders with pending bills */}
+                                            {role !== 'OPERATOR' && tripBill.billStatus === 'PENDING' && (
                                                 <button
                                                     className="pay-now-btn"
                                                     onClick={() => handlePayNow(tripBill)}
@@ -366,7 +448,7 @@ function Billing() {
 
                     {/* Sidebar with Payment Component */}
                     <div className="sidebar-container">
-                        {selectedBill ? (
+                        {selectedBill && role !== 'OPERATOR' ? (
                             <div className="payment-card">
                                 <div className="payment-header">
                                     <h3>
@@ -521,26 +603,35 @@ function Billing() {
                         ) : (
                             <div className="no-reservation-card">
                                 <h3>
-                                    <i className="fas fa-info-circle"></i> Account Summary
+                                    <i className="fas fa-info-circle"></i> {role === 'OPERATOR' ? 'System Summary' : 'Account Summary'}
                                 </h3>
-                                <p className="helper-text">
-                                    Select an unpaid bill to make a payment
-                                </p>
+                                {role !== 'OPERATOR' && (
+                                    <p className="helper-text">
+                                        Select an unpaid bill to make a payment
+                                    </p>
+                                )}
                                 {billingData && (
                                     <>
                                         <div className="summary-divider"></div>
                                         <p className="summary-stat">
-                                            <strong>Total Trips:</strong> {billingData.totalTrips}
+                                            <strong>Total Trips:</strong> {role === 'OPERATOR' ? billingData.totalSystemTrips : billingData.totalTrips}
                                         </p>
-                                        <p className="summary-stat">
-                                            <strong>Total Spent:</strong> ${billingData.totalAmountSpent.toFixed(2)}
-                                        </p>
+                                        {role !== 'OPERATOR' && (
+                                            <p className="summary-stat">
+                                                <strong>Total Spent:</strong> ${billingData.totalAmountSpent.toFixed(2)}
+                                            </p>
+                                        )}
+                                        {role === 'OPERATOR' && (
+                                            <p className="summary-stat">
+                                                <strong>Total Revenue:</strong> ${billingData.totalSystemRevenue.toFixed(2)}
+                                            </p>
+                                        )}
                                         <div className="summary-divider"></div>
                                         <p className="summary-stat">
-                                            <strong>Outstanding Bills:</strong> {billingData.totalOutstandingBills}
+                                            <strong>Outstanding Bills:</strong> {role === 'OPERATOR' ? billingData.totalSystemOutstandingBills : billingData.totalOutstandingBills}
                                         </p>
                                         <p className="summary-stat">
-                                            <strong>Amount Due:</strong> ${billingData.totalOutstandingAmount.toFixed(2)}
+                                            <strong>Amount Due:</strong> ${role === 'OPERATOR' ? billingData.totalSystemOutstandingAmount.toFixed(2) : billingData.totalOutstandingAmount.toFixed(2)}
                                         </p>
                                     </>
                                 )}

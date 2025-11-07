@@ -13,4 +13,6 @@ public interface BillRepository {
     Bill save(Bill bill);
 
     List<Bill> findAllByUserId(UserId userId);
+
+    List<Bill> findAll();
 }
