@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.soen343.tbd.application.dto.DockUpdateContextDTO;
 import com.soen343.tbd.application.dto.MaintenanceUpdateDTO;
+import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO.DockWithBikeDTO;
 import com.soen343.tbd.domain.model.Bill;
@@ -82,12 +83,8 @@ public class SSEStationObserver implements StationObserver {
                     emitter.send(SseEmitter.event()
                             .name("dock-update")
                             .data(dockUpdate));
-
                     logger.debug("Sent dock update for station {}, dock {}",
                             station.getStationId(), dock.getDockId());
-
-                    logger.debug("Checking bike {} for maintenance updates",
-                            bike != null ? bike.getBikeId() : "null");
                 }
             } catch (IOException e) {
                 logger.error("Error sending update to SSE client: " + e.getMessage());
@@ -149,6 +146,31 @@ public class SSEStationObserver implements StationObserver {
         if (!deadEmitters.isEmpty()) {
             emitters.removeAll(deadEmitters);
             logger.debug("Removed {} dead SSE connections after operator bill update.", deadEmitters.size());
+        }
+    }
+
+    // special method only for operators
+    @Override
+    public void sendOperatorEvent(EventDTO event) {
+        if (emitters.isEmpty()) {
+            logger.debug("No active Operator SSE connections to notify.");
+        }
+
+        List<SseEmitter> deadEmitters = new ArrayList<>();
+
+        emitters.forEach(emitter -> {
+            try {
+                emitter.send(SseEmitter.event().name("operator-event").data(event));
+            } catch (IOException ioe) {
+                logger.error("Error sending operator event to SSE client: " + ioe.getMessage());
+                deadEmitters.add(emitter);
+            }
+        });
+
+        if (!deadEmitters.isEmpty()) {
+            emitters.removeAll(deadEmitters);
+            logger.debug("Removed {} dead SSE connections. Remaining connections: {}",
+                    deadEmitters.size(), emitters.size());
         }
     }
 

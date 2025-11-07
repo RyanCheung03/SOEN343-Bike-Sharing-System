@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.soen343.tbd.application.dto.MaintenanceUpdateDTO;
+import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.application.dto.StationDetailsDTO;
 import com.soen343.tbd.domain.model.Bill;
 
@@ -16,6 +17,11 @@ import com.soen343.tbd.domain.model.Bill;
 public class StationPublisher implements StationSubject {
     private static final Logger logger = LoggerFactory.getLogger(StationPublisher.class);
     private final List<StationObserver> observers = new ArrayList<>();
+    private final SSEStationObserver sseStationObserver;
+
+    public StationPublisher(SSEStationObserver sseStationObserver) {
+        this.sseStationObserver = sseStationObserver;
+    }
 
     @Override
     public void attach(StationObserver observer) {
@@ -51,6 +57,12 @@ public class StationPublisher implements StationSubject {
                 logger.error("Error notifying observer about maintenance update: {}", e.getMessage());
             }
         }
+    }
+
+    @Override
+    public void notifyOperatorEvent(EventDTO event) {
+        logger.debug("Notifying about operator event: {}", event.getMetadata());
+        sseStationObserver.sendOperatorEvent(event);
     }
 
 }

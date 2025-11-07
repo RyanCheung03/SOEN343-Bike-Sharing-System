@@ -201,6 +201,13 @@ function Billing() {
     fetchBillingHistory();
   };
 
+  const handleViewHistory = () => {
+    navigate("/history");
+  };
+  const handlePricingClick = () => {
+    navigate("/pricing");
+  };
+
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString("en-US", {
@@ -363,6 +370,8 @@ function Billing() {
         handleBillingClick={handleBillingClick}
         handleHomeClick={handleHomeClick}
         activePage="billing"
+        handleViewHistory={handleViewHistory}
+        handlePricingClick={handlePricingClick}
       />
 
       <div className="content-wrapper">

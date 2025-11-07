@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NavigationBar.css';
 
-function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handleHomeClick, activePage, handleViewHistory }) {
+function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handleHomeClick, activePage, handleViewHistory, handlePricingClick }) {
     const [isOpen, setIsOpen] = useState(false);
     const sidebarRef = useRef(null);
     const initials = fullName
@@ -51,18 +51,35 @@ function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handl
                             <i className="fas fa-home"></i>
                             Home
                         </li>
-                        <li className={`nav-item ${activePage === 'billing' ? 'active' : ''}`} onClick={handleBillingClick}>
-                            <i className="fas fa-file-invoice-dollar"></i>
-                            My Bills
-                        </li>
-                        <li className="nav-item" onClick={handleViewHistory}>
-                            <i className="fas fa-history"></i>
-                            History
-                        </li>
-                        <li className="nav-item">
-                            <i className="fas fa-cog"></i>
-                            Settings
-                        </li>
+
+                        {role === "RIDER" && (
+                            <li className={`nav-item ${activePage === 'billing' ? 'active' : ''}`} onClick={handleBillingClick}>
+                                <i className="fas fa-file-invoice-dollar"></i>
+                                My Bills
+                            </li>
+                        )}
+
+                        {role === "OPERATOR" && (
+                            <li className={`nav-item ${activePage === 'billing' ? 'active' : ''}`} onClick={handleBillingClick}>
+                                <i className="fas fa-file-invoice-dollar"></i>
+                                All Bills
+                            </li>
+                        )}
+
+                        {role === "RIDER" && (
+                            <li className={`nav-item ${activePage === 'history' ? 'active' : ''}`} onClick={handleViewHistory}>
+                                <i className="fas fa-history"></i>
+                                History
+                            </li>
+                        )}    
+                            
+                        {role === "OPERATOR" && (
+                            <li className={`nav-item ${activePage === 'history' ? 'active' : ''}`} onClick={handleViewHistory}>
+                                <i className="fas fa-history"></i>
+                                All Trip Histories
+                            </li>
+                        )}  
+
                         <li className="nav-item" onClick={handleLogout}>
                             <i className="fas fa-sign-out-alt"></i>
                             Logout
