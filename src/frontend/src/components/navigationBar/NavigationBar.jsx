@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NavigationBar.css';
 
-function NavigationBar({ fullName, role, handleLogout, handleViewHistory }) {
+function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handleHomeClick, activePage, handleViewHistory }) {
     const [isOpen, setIsOpen] = useState(false);
     const sidebarRef = useRef(null);
     const initials = fullName
@@ -47,7 +47,7 @@ function NavigationBar({ fullName, role, handleLogout, handleViewHistory }) {
             >
                 <div className="nav-content">
                     <ul className="nav-menu">
-                        <li className="nav-item active">
+                        <li className={`nav-item ${activePage === 'home' ? 'active' : ''}`} onClick={handleHomeClick}>
                             <i className="fas fa-home"></i>
                             Home
                         </li>

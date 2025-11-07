@@ -43,4 +43,9 @@ public class UserService {
             return "Unknown User";
         }
     }
+
+    public User getUserById(UserId userId){
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("No user found with id: " + userId.value()));
+    }
 }

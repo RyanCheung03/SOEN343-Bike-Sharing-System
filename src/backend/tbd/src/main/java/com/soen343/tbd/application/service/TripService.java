@@ -1,9 +1,19 @@
 package com.soen343.tbd.application.service;
 
+import java.util.HashMap;
+import java.util.List;
+
+import java.util.Map;
+
+import com.soen343.tbd.domain.model.enums.BikeType;
+import com.soen343.tbd.domain.model.pricing.EBikePricing;
+import com.soen343.tbd.domain.model.pricing.StandardBikePricing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.domain.model.*;
 import com.soen343.tbd.domain.model.enums.BikeStatus;
@@ -174,8 +184,13 @@ public class TripService {
         // Create and save the trip
         Trip newTrip = null;
         try {
-            newTrip = new Trip(null, bikeId, userId, stationId);
-            tripRepository.save(newTrip);
+            if (selectedBike.getBikeType().equals(BikeType.E_BIKE)) {
+                newTrip = new Trip(null, bikeId, userId, stationId, new EBikePricing());
+            } else {
+                newTrip = new Trip(null, bikeId, userId, stationId, new StandardBikePricing());
+            }
+
+            newTrip = tripRepository.save(newTrip);
             logger.info("Trip saved successfully");
 
             newTrip = tripRepository.checkRentalsByUserId(userId).orElse(null);
@@ -195,7 +210,7 @@ public class TripService {
     }
 
     @Transactional
-    public void returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
+    public Map<String, Object> returnBikeService(TripId tripId, BikeId bikeId, DockId dockId, UserId userId, StationId stationId) {
         logger.info("Starting bike return process...");
         logger.info("BikeId: {}, DockId: {}, UserId: {}, StationId: {}",
                 bikeId.value(), dockId.value(), userId.value(), stationId.value());
@@ -292,7 +307,7 @@ public class TripService {
 
         // Persist the resulting bill
         try {
-            billRepository.save(resultingBill);
+            resultingBill = billRepository.save(resultingBill);
             logger.info("Bill assigned and saved successfully");
         } catch (Exception e) {
             logger.warn("New Bill unable to be created", e);
@@ -300,6 +315,19 @@ public class TripService {
         }
 
         logger.info("Bike return completed successfully!");
+
+        // Fetch station names
+        Station startStation = stationRepository.findById(currentTrip.getStartStationId())
+                .orElseThrow(() -> new RuntimeException("Start station not found with ID: " + currentTrip.getStartStationId().value()));
+        Station endStation = selectedStation; // We already have the end station from above
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("resultingTrip", currentTrip);
+        response.put("resultingBill", resultingBill);
+        response.put("startStationName", startStation.getStationName());
+        response.put("endStationName", endStation.getStationName());
+        response.put("pricingStrategy", currentTrip.getPricingStrategy());
+        return response;
     }
 
     private void notifyAllUsers(StationId stationId) {

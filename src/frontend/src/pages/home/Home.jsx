@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Map from '../../components/Map';
 import useHomeLogic from './useHomeLogic';
 import ReservationBanner from '../../components/reservationBanner/ReservationBanner';
@@ -11,6 +12,8 @@ import OperatorConsole from "../../components/operatorConsole/OperatorConsole";
 import './Home.css';
 
 const Home = () => {
+    const navigate = useNavigate();
+
   const {
     // Loading states
     isLoading,
@@ -24,6 +27,7 @@ const Home = () => {
     activeBikeRental,
     bikesUnderMaintenance,
     activeBikeMaintenanceRemoval,
+        tripSummaryData,
     // popups & control
     confirmRental,
     rentalSuccessPopup,
@@ -79,27 +83,37 @@ const Home = () => {
         handleRemoveFromMaintenance
     };
 
-  const popupProps = {
-    confirmRental,
-    rentalSuccessPopup,
-    confirmReturn,
-    returnSuccessPopup,
-    confirmReservation,
-    reservationSuccessPopup,
-    showCancelReservationPopup,
-    activeBikeRental,
-    handleConfirmRental,
-    handleCancelConfirmationRental,
-    handleCancelEventRental,
-    handleConfirmReturn,
-    handleCancelConfirmationReturn,
-    handleCancelEventReturn,
-    handleConfirmReservation,
-    setConfirmReservation,
-    setReservationSuccessPopup,
-    handleCancelActiveReservation,
-    setShowCancelReservationPopup,
-  };
+    const popupProps = {
+        confirmRental,
+        rentalSuccessPopup,
+        confirmReturn,
+        returnSuccessPopup,
+        confirmReservation,
+        reservationSuccessPopup,
+        showCancelReservationPopup,
+        activeBikeRental,
+        tripSummaryData,
+        handleConfirmRental,
+        handleCancelConfirmationRental,
+        handleCancelEventRental,
+        handleConfirmReturn,
+        handleCancelConfirmationReturn,
+        handleCancelEventReturn,
+        handleConfirmReservation,
+        setConfirmReservation,
+        setReservationSuccessPopup,
+        handleCancelActiveReservation,
+        setShowCancelReservationPopup
+    };
+
+    const handleBillingClick = () => {
+        navigate('/billing');
+    };
+
+    const handleHomeClick = () => {
+        // Already on home page, could refresh if needed
+        window.location.reload();
+    };
 
     return (
         <div className="home-container">
@@ -110,6 +124,9 @@ const Home = () => {
                 role={role}
                 handleLogout={handleLogout}
                 handleViewHistory={handleViewHistory}
+                handleBillingClick={handleBillingClick}
+                handleHomeClick={handleHomeClick}
+                activePage="home"
             />
 
       <div className="content-wrapper">
@@ -138,11 +155,11 @@ const Home = () => {
                             </h2>
                             <Map {...mapProps} {...popupProps} />
                         </div>
-                        
+
                         {/* Show maintenance tracker for operators */}
                         {role === 'OPERATOR' && stations && stations.length > 0 && (
-                            <MaintenanceTracker 
-                                bikesUnderMaintenance={bikesUnderMaintenance} 
+                            <MaintenanceTracker
+                                bikesUnderMaintenance={bikesUnderMaintenance}
                                 activeBikeMaintenanceRemoval={activeBikeMaintenanceRemoval}
                                 setActiveBikeMaintenanceRemoval={setActiveBikeMaintenanceRemoval}
                             />
@@ -162,9 +179,9 @@ const Home = () => {
                             <div className="reservation-section">
                                 {activeReservation.hasActiveReservation ? (
                                     <div className="reservation-card">
-                                        <ReservationBanner 
-                                            activeReservation={activeReservation} 
-                                            timeLeft={timeLeft} 
+                                        <ReservationBanner
+                                            activeReservation={activeReservation}
+                                            timeLeft={timeLeft}
                                         />
                                     </div>
                                 ) : (
@@ -175,7 +192,7 @@ const Home = () => {
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className="rental-section">
                                     {activeBikeRental.hasOngoingRental && activeBikeRental.bikeId ? (
                                         <div className="reservation-card">
