@@ -16,11 +16,14 @@ public class TripDetailsDTO {
     private Double billCost;
     private Double baseFare;
     private Double perMinuteRate;
+    private String userName;
+
+
 
     public TripDetailsDTO(Long tripId, Long bikeId, Long userId, Long startStationId,
                           Long endStationId, String startTime, String endTime,
                           String status, Long billId, BikeType bikeType,
-                          Double billCost, Double baseFare, Double perMinuteRate) {
+                          Double billCost, Double baseFare, Double perMinuteRate, String userName) {
         this.tripId = tripId;
         this.bikeId = bikeId;
         this.userId = userId;
@@ -34,6 +37,7 @@ public class TripDetailsDTO {
         this.billCost = billCost;
         this.baseFare = baseFare;
         this.perMinuteRate = perMinuteRate;
+        this.userName = userName;
     }
 
 
@@ -141,5 +145,12 @@ public class TripDetailsDTO {
 
     public void setPerMinuteRate(Double perMinuteRate) {
         this.perMinuteRate = perMinuteRate;
+    }
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

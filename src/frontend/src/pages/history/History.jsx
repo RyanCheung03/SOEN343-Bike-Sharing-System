@@ -235,6 +235,7 @@ const History = () => {
                         <div key={trip.tripId} className="trip-card">
                             <h3>Trip #{trip.tripId}</h3>
                             <p>User ID: {trip.userId}</p>
+                            <p>Username: {trip.userName}</p>
                             <p>From Station: {trip.startStationId || 'N/A'}</p>
                             <p>To Station: {trip.endStationId || 'N/A'}</p>
                             <p>Bike Type: {trip.bikeType}</p>

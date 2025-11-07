@@ -6,6 +6,7 @@ import com.soen343.tbd.domain.model.Trip;
 import com.soen343.tbd.domain.model.Bike;
 import com.soen343.tbd.domain.model.Bill;
 import com.soen343.tbd.domain.model.enums.BikeType;
+import com.soen343.tbd.domain.model.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -86,6 +87,16 @@ public class HistoryController {
                 }
             }
 
+            String userName = null;
+            if(trip.getUserId() != null) {
+                Optional<User> user = historyService.findUserById(trip.getUserId().value());
+                if (user.isPresent()) {
+                    userName = user.get().getUsername();
+                } else {
+                    userName = "Unknown User";
+                }
+            }
+
             // Build response DTO with trip details
             TripDetailsDTO response = new TripDetailsDTO(
                     trip.getTripId().value(),
@@ -100,7 +111,8 @@ public class HistoryController {
                     bikeType,
                     billCost,
                     trip.getPricingStrategy() != null ? trip.getPricingStrategy().getBaseFee() : null,
-                    trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPerMinuteRate() : null
+                    trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPerMinuteRate() : null,
+                    userName
             );
             tripResponse.add(response);
         }
