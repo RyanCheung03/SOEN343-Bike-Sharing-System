@@ -66,8 +66,7 @@ public class SecurityConfig {
                 // If any exception occurs, this will handle it by redirecting to 401
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        // Add a filter to validate the tokens with every request. It forces tgat tge
-        // filter is executed before the UsernamePasswordAuthenticationFilter
+
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

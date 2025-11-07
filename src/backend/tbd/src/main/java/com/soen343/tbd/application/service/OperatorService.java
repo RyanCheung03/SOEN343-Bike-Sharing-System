@@ -1,17 +1,24 @@
 package com.soen343.tbd.application.service;
 
+import java.util.List;
+
 import com.soen343.tbd.domain.model.Station;
 import com.soen343.tbd.domain.model.enums.StationStatus;
 import com.soen343.tbd.domain.model.ids.StationId;
 import com.soen343.tbd.domain.repository.StationRepository;
 import com.soen343.tbd.domain.model.Bike;
+import com.soen343.tbd.domain.model.enums.BikeStatus;
 import com.soen343.tbd.domain.model.Dock;
 import com.soen343.tbd.domain.model.enums.DockStatus;
+import com.soen343.tbd.domain.model.enums.EntityStatus;
+import com.soen343.tbd.domain.model.enums.EntityType;
 import com.soen343.tbd.domain.model.ids.BikeId;
 import com.soen343.tbd.domain.model.ids.DockId;
 import com.soen343.tbd.domain.repository.BikeRepository;
 import com.soen343.tbd.domain.repository.DockRepository;
 import com.soen343.tbd.application.dto.OperatorRebalanceDTO;
+import com.soen343.tbd.application.observer.StationSubject;
+import com.soen343.tbd.application.dto.MaintenanceUpdateDTO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +35,18 @@ public class OperatorService {
     private final StationRepository stationRepository;
     private final BikeRepository bikeRepository;
     private final DockRepository dockRepository;
-    
-    public OperatorService(BikeRepository bikeRepository, DockRepository dockRepository, StationRepository stationRepository) {
+    private final EventService eventService;
+    private final StationService stationService;
+    private final StationSubject stationPublisher;
+
+    public OperatorService(BikeRepository bikeRepository, DockRepository dockRepository, StationRepository stationRepository,
+                            EventService eventService, StationService stationService, StationSubject stationPublisher) {
         this.bikeRepository = bikeRepository;
         this.dockRepository = dockRepository;
         this.stationRepository = stationRepository;
+        this.eventService = eventService;
+        this.stationService = stationService;
+        this.stationPublisher = stationPublisher;
     }
 
     // allows operator toggle between active/outOFservice for station
@@ -40,6 +54,9 @@ public class OperatorService {
         // get station
         Station station = stationRepository.findById(stationId)
             .orElseThrow(() -> new RuntimeException("Station not found, ID: " + stationId.value()));
+
+        // Current status
+        StationStatus currentStatus = station.getStationStatus();
 
         switch (newStatus) {
             case ACTIVE:
@@ -55,8 +72,21 @@ public class OperatorService {
                 throw new IllegalArgumentException("Not a station status: " + newStatus);
         }
 
+        // Create event for station status change
+        eventService.createEventForEntity(
+                EntityType.STATION,
+                station.getStationId().value(),
+                "Station status changed",
+                EntityStatus.fromSpecificStatus(currentStatus),
+                EntityStatus.fromSpecificStatus(newStatus),
+                "System"
+        );
+
         // save updated station
         stationRepository.save(station);
+
+        // Observer update
+        notifyAllUsersByStation(station.getStationId());
         
         logger.info("Station ID: {} new status: {}", station.getStationId(), newStatus);
     }
@@ -96,20 +126,181 @@ public class OperatorService {
         dockRepository.save(sourceDock);
         logger.info("Source dock {} empty", sourceDockId.value());
 
+        // Create event for dock status change - source dock
+        eventService.createEventForEntity(
+                EntityType.DOCK,
+                sourceDock.getDockId().value(),
+                "Dock status changed",
+                EntityStatus.OCCUPIED,
+                EntityStatus.EMPTY,
+                "System"
+        );
+
         // target dock occupied
         targetDock.setStatus(DockStatus.OCCUPIED);
         dockRepository.save(targetDock);
         logger.info("Target dock {} occupied", targetDockId.value());
 
-        // increase target station count
-        targetStation.incrementBikesDocked();
-        stationRepository.save(targetStation);
-        logger.info("Target station {} bike count++", targetStationId.value());
+        // Create event for dock status change - target dock
+        eventService.createEventForEntity(
+                EntityType.DOCK,
+                targetDock.getDockId().value(),
+                "Dock status changed",
+                EntityStatus.EMPTY,
+                EntityStatus.OCCUPIED,
+                "System"
+        );
 
         // decrease source station count
+
+        // Deterimine previous status for event logging
+        EntityStatus previousStatus = EntityStatus.fromSpecificStatus(sourceStation.getStationStatus());
+
         sourceStation.decrementBikesDocked();
         stationRepository.save(sourceStation);
         logger.info("Source station {} bike count--", sourceStationId.value());
 
+        // Determine new status for event logging
+        EntityStatus newStatus = EntityStatus.fromSpecificStatus(sourceStation.getStationStatus());
+
+        // Only create event if status has changed
+        if (previousStatus != newStatus) {
+            // Create event for station bike count change - source station
+            eventService.createEventForEntity(
+                EntityType.STATION,
+                sourceStation.getStationId().value(),
+                "Station bike count changed",
+                previousStatus,
+                newStatus,
+                "System");
+        }
+
+        // increase target station count
+
+        // Determine previous status for event logging
+        previousStatus = EntityStatus.fromSpecificStatus(targetStation.getStationStatus());
+
+        targetStation.incrementBikesDocked();
+        stationRepository.save(targetStation);
+        logger.info("Target station {} bike count++", targetStationId.value());
+
+        // Determine new status for event logging
+        newStatus = EntityStatus.fromSpecificStatus(targetStation.getStationStatus());
+
+        // Only create event if status has changed
+        if (previousStatus != newStatus) {
+            // Create event for station bike count change - target station
+            eventService.createEventForEntity(
+                EntityType.STATION,
+                targetStation.getStationId().value(),
+                "Station bike count changed",
+                previousStatus,
+                newStatus,
+                "System");
+        }
+
+        // Observer update
+        notifyAllUsersByStation(sourceStation.getStationId());
+        notifyAllUsersByStation(targetStation.getStationId());
+
+    }
+
+    @Transactional
+    public void setBikeForMaintenance(BikeId bikeId, StationId stationId){
+        // get bike
+        Bike bike = bikeRepository.findById(bikeId)
+            .orElseThrow(() -> new RuntimeException("Bike not found, ID: " + bikeId.value()));
+
+        // Determine previous status for event logging
+        EntityStatus previousStatus = EntityStatus.fromSpecificStatus(bike.getStatus());
+
+        // set bike for maintenance
+        bike.setStatus(BikeStatus.MAINTENANCE);
+        bike.setDockId(null); // remove bike from dock
+        bikeRepository.save(bike);
+
+        // Create event for bike status change
+        eventService.createEventForEntity(
+                EntityType.BIKE,
+                bike.getBikeId().value(),
+                "Bike status changed",
+                previousStatus,
+                EntityStatus.MAINTENANCE,
+                "Operator"
+        );
+
+        // Maintenance change notification
+        stationPublisher.notifyMaintenanceChange(
+            new MaintenanceUpdateDTO(
+                bike.getBikeId().value(),
+                bike.getStatus().name(),
+                stationId.value(),
+                "", // station name not needed here
+                null, // dock id not needed here
+                "ADDED"
+            )
+        );
+
+        // Observer update 
+        notifyAllUsersByStation(stationId);
+
+        logger.info("Bike ID: {} set for maintenance", bike.getBikeId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Bike> getBikesUnderMaintenance(){
+        return bikeRepository.findByStatus(BikeStatus.MAINTENANCE);
+    }
+
+    @Transactional
+    public void removeBikeFromMaintenance(BikeId bikeId, DockId dockId, StationId stationId){
+        // get bike
+        Bike bike = bikeRepository.findById(bikeId)
+            .orElseThrow(() -> new RuntimeException("Bike not found, ID: " + bikeId.value()));
+
+        // Determine previous status for event logging
+        EntityStatus previousStatus = EntityStatus.fromSpecificStatus(bike.getStatus());
+
+        // set bike to available
+        bike.setStatus(BikeStatus.AVAILABLE);
+        bike.setDockId(dockId);
+        bikeRepository.save(bike);
+
+        // Create event for bike status change
+        eventService.createEventForEntity(
+                EntityType.BIKE,
+                bike.getBikeId().value(),
+                "Bike status changed",
+                previousStatus,
+                EntityStatus.AVAILABLE,
+                "Operator"
+        );
+
+        // Maintenance change notification
+        stationPublisher.notifyMaintenanceChange(
+            new MaintenanceUpdateDTO(
+                bike.getBikeId().value(),
+                bike.getStatus().name(),
+                stationId.value(),
+                "", // station name not needed here
+                dockId.value(),
+                "REMOVED"
+            )
+        );
+
+        logger.info("Bike ID: {} removed from maintenance, placed in dock ID: {}", bike.getBikeId(), dockId.value());
+
+        // Observer update
+        notifyAllUsersByStation(stationId);
+    }
+
+    private void notifyAllUsersByStation(StationId stationId) {
+        try {
+            stationService.getStationWithDetails(stationId.value())
+                    .ifPresent(stationPublisher::notifyObservers);
+            logger.debug("Notified all users about station update: {}", stationId.value());
+        } catch (Exception e) {
+            logger.warn("Failed to notify users for station: {}", stationId.value(), e);
+        }
     }
 }

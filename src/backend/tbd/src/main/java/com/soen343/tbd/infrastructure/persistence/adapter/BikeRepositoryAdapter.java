@@ -1,16 +1,23 @@
 package com.soen343.tbd.infrastructure.persistence.adapter;
 
+import java.util.List;
+
 import com.soen343.tbd.domain.model.Bike;
 import com.soen343.tbd.domain.model.ids.BikeId;
+import com.soen343.tbd.domain.model.enums.BikeStatus;
 import com.soen343.tbd.domain.model.ids.DockId;
 import com.soen343.tbd.domain.repository.BikeRepository;
 import com.soen343.tbd.infrastructure.persistence.entity.DockEntity;
 import com.soen343.tbd.infrastructure.persistence.mapper.BikeMapper;
 import com.soen343.tbd.infrastructure.persistence.repository.JpaBikeRepository;
+
 import jakarta.persistence.EntityManager;
+
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+
+import com.soen343.tbd.infrastructure.persistence.entity.BikeEntity;
 
 @Repository
 public class BikeRepositoryAdapter implements BikeRepository {
@@ -27,7 +34,7 @@ public class BikeRepositoryAdapter implements BikeRepository {
     @Override
     public Optional<Bike> findById(BikeId bikeId) {
         return jpaBikeRepository.findById(bikeId.value())
-                .map(bikeMapper::toDomain);
+                .map(b -> bikeMapper.toDomain((BikeEntity) b));
     }
 
     @Override
@@ -46,6 +53,14 @@ public class BikeRepositoryAdapter implements BikeRepository {
     @Override
     public Optional<Bike> findByDockId(DockId dockId) {
         return jpaBikeRepository.findByDock_DockId(dockId.value())
-                .map(bikeMapper::toDomain);
+                .map(b -> bikeMapper.toDomain((BikeEntity) b));
+    }
+
+    @Override
+    public List<Bike> findByStatus(BikeStatus status) {
+        return jpaBikeRepository.findByStatus(status)
+                .stream()
+                .map(bikeEntity -> bikeMapper.toDomain((BikeEntity) bikeEntity))
+                .toList();
     }
 }

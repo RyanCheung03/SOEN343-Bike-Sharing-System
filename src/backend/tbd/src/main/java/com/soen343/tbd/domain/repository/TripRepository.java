@@ -11,6 +11,10 @@ public interface TripRepository {
     Optional<Trip> checkRentalsByUserId(UserId userId);
 
     Optional<Trip> findById(TripId tripId);
+    
+    Optional<Trip> findByTripIdAndEmail(TripId tripId, String email);
+
+    List<Trip> findTripByEmail(String email);
 
     Trip save(Trip trip);
 

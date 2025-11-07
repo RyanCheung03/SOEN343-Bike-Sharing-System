@@ -13,7 +13,6 @@ import com.soen343.tbd.domain.repository.TripRepository;
 import com.soen343.tbd.infrastructure.persistence.entity.BikeEntity;
 import com.soen343.tbd.infrastructure.persistence.entity.BillEntity;
 import com.soen343.tbd.infrastructure.persistence.entity.StationEntity;
-import com.soen343.tbd.infrastructure.persistence.entity.TripEntity;
 import com.soen343.tbd.infrastructure.persistence.entity.UserEntity;
 import com.soen343.tbd.infrastructure.persistence.mapper.PricingStrategyConverter;
 import com.soen343.tbd.infrastructure.persistence.mapper.TripMapper;
@@ -43,6 +42,20 @@ public class TripRepositoryAdapter implements TripRepository {
     public Optional<Trip> findById(TripId tripId) {
         return jpaTripRepository.findById(tripId.value())
                 .map(tripMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Trip> findByTripIdAndEmail(TripId tripId, String email) {
+        return jpaTripRepository.findByTripIdAndUser_Email(tripId.value(), email)
+                .map(tripMapper::toDomain);
+    }
+
+    @Override
+    public List<Trip> findTripByEmail(String email) {
+        return jpaTripRepository.findByUser_Email(email)
+                .stream()
+                .map(tripMapper::toDomain)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
