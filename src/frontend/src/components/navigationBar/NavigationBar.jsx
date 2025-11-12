@@ -5,6 +5,7 @@ function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handl
     const [isOpen, setIsOpen] = useState(false);
     const sidebarRef = useRef(null);
     const actualUserRole = localStorage.getItem('actual_user_role');
+    const userTier = localStorage.getItem('tier') || 'NONE';
     const initials = fullName
         .split(' ')
         .map(name => name[0])
@@ -113,6 +114,12 @@ function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handl
                         <div className="profile-info">
                             <p className="profile-name">{fullName}</p>
                             <p className="profile-role">{role}</p>
+                            {userTier && userTier !== 'NONE' && (
+                                <div className={`tier-badge tier-${userTier.toLowerCase()}`}>
+                                    <i className="fas fa-crown"></i>
+                                    {userTier} TIER
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
