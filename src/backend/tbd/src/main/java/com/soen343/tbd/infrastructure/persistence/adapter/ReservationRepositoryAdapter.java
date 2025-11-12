@@ -14,6 +14,7 @@ import com.soen343.tbd.domain.model.enums.ReservationStatus;
 import com.soen343.tbd.infrastructure.persistence.entity.StationEntity;
 
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -65,6 +66,11 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
 
 
         jpaReservationRepository.save(reservationEntity);
+    }
+
+    @Override
+    public int missedReservationscount(UserId userId, LocalDateTime oneYearAgo) {
+        return jpaReservationRepository.countByUserIdAndStatusSince(userId.value(), ReservationStatus.EXPIRED, oneYearAgo);
     }
 
 }
