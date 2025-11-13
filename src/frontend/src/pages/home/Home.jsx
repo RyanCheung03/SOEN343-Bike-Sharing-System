@@ -27,7 +27,7 @@ const Home = () => {
     activeBikeRental,
     bikesUnderMaintenance,
     activeBikeMaintenanceRemoval,
-        tripSummaryData,
+    tripSummaryData,
     // popups & control
     confirmRental,
     rentalSuccessPopup,

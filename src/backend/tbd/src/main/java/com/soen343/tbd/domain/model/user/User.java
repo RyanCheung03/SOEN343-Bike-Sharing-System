@@ -134,21 +134,21 @@ public abstract class User {
         this.cvc = cvc;
     }
 
-    public TierType getTier() {
+    public TierType getTierType() {
         return tier;
     }
 
-    public void setTier(TierType tier) {
+    public void setTierType(TierType tier) {
         this.tier = tier;
     }
 
     // Convenience methods for tier benefits
     public double getCurrentDiscount() {
-        return tier.getTier().getDiscountRate();
+        return tier.getLoyaltyTier().getDiscountRate();
     }
 
     public int getExtraReservationTime() {
-        return tier.getTier().getExtraReservationTime();
+        return tier.getLoyaltyTier().getExtraReservationTime();
     }
 
     @Override

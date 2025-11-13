@@ -14,7 +14,7 @@ public enum TierType {
         this.tier = tier;
     }
 
-    public LoyaltyTier getTier() {
+    public LoyaltyTier getLoyaltyTier() {
         return tier;
     }
 }

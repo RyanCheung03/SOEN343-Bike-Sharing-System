@@ -92,3 +92,12 @@
     background-color: #ddd;
     margin: 8px 0;
 }
+
+.discount-row {
+    color: #28a745;
+}
+
+.discount-value {
+    font-weight: 600;
+    color: #28a745;
+}

@@ -23,13 +23,13 @@ public class LoyaltyTierService {
     // calls the isEligible method of each tier and checks for eligibility
     public TierType calculateUserTier(User user) {
         // Check from highest to lowest tier
-        if (TierType.GOLD.getTier().isEligible(user, tripRepository, reservationRepository)) {
+        if (TierType.GOLD.getLoyaltyTier().isEligible(user, tripRepository, reservationRepository)) {
             return TierType.GOLD;
         }
-        if (TierType.SILVER.getTier().isEligible(user, tripRepository, reservationRepository)) {
+        if (TierType.SILVER.getLoyaltyTier().isEligible(user, tripRepository, reservationRepository)) {
             return TierType.SILVER;
         }
-        if (TierType.BRONZE.getTier().isEligible(user, tripRepository, reservationRepository)) {
+        if (TierType.BRONZE.getLoyaltyTier().isEligible(user, tripRepository, reservationRepository)) {
             return TierType.BRONZE;
         }
         return TierType.NONE;
@@ -38,10 +38,10 @@ public class LoyaltyTierService {
     // This service method updated the Tier for a given user
     public void updateUserTier(User user) {
         TierType newTier = calculateUserTier(user);
-        TierType currentTier = user.getTier();
+        TierType currentTier = user.getTierType();
         // only update if tier has changed
         if (currentTier == null || currentTier != newTier) {
-            user.setTier(newTier);
+            user.setTierType(newTier);
             userRepository.save(user);
             System.out.println("operation completed ");
         }

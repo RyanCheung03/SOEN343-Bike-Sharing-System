@@ -126,7 +126,7 @@ public class ReservationController {
                 // Update user's loyalty tier after missing a reservation (expired)
                 User user = userService.getUserById(userId);
                 loyaltyTierService.updateUserTier(user);
-                String updatedTier = user.getTier().name();
+                String updatedTier = user.getTierType().name();
                 logger.info("Reservation {} expired. Updated loyalty tier for user: {} to {}",
                     reservationId.value(), user.getEmail(), updatedTier);
 

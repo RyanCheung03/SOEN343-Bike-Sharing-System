@@ -1,7 +1,6 @@
 package com.soen343.tbd.application.service;
 
 import java.util.HashMap;
-import java.util.List;
 
 import java.util.Map;
 
@@ -23,7 +22,6 @@ import com.soen343.tbd.domain.model.enums.EntityStatus;
 import com.soen343.tbd.domain.model.ids.*;
 import com.soen343.tbd.domain.model.helpers.Event;
 import com.soen343.tbd.domain.repository.*;
-import com.soen343.tbd.application.observer.StationSubject;
 
 @Service
 public class TripService {
@@ -37,10 +35,11 @@ public class TripService {
     private final StationSubject stationPublisher;
     private final StationService stationService;
     private final EventService eventService;
+    private final UserService userService;
 
     public TripService(BillRepository billRepository, TripRepository tripRepository, BikeRepository bikeRepository,
             DockRepository dockRepository, StationRepository stationRepository, StationSubject stationPublisher,
-            StationService stationService, EventService eventService) {
+            StationService stationService, EventService eventService, UserService userService) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.bikeRepository = bikeRepository;
@@ -49,6 +48,7 @@ public class TripService {
         this.stationPublisher = stationPublisher;
         this.stationService = stationService;
         this.eventService = eventService;
+        this.userService = userService;
     }
 
     /**
@@ -290,8 +290,10 @@ public class TripService {
         // Complete the given trip and compute the bill
         Bill resultingBill = null;
         try {
+            double discountRate = userService.getUserById(userId).getCurrentDiscount();
+
             EntityStatus previousStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
-            resultingBill = currentTrip.endTrip(selectedStation.getStationId());
+            resultingBill = currentTrip.endTrip(selectedStation.getStationId(), discountRate);
             tripRepository.save(currentTrip);
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
 
@@ -299,7 +301,7 @@ public class TripService {
                     "Trip completed", previousStatus, newStatus,
                     "User_" + userId.value());
 
-            logger.info("Trip ended successfully");
+            logger.info("Trip ended successfully, discount rate applied: {}", userService.getUserById(userId).getCurrentDiscount());
         } catch (Exception e) {
             logger.warn("Unable to end trip", e);
             throw new RuntimeException("Failed to end trip during return", e);
@@ -307,7 +309,13 @@ public class TripService {
 
         // Persist the resulting bill
         try {
+            Double regularCost = resultingBill.getRegularCost();
+
             resultingBill = billRepository.save(resultingBill);
+            
+            // Restore the value after save (since mapper ignores regularCost when loading from DB)
+            resultingBill.setRegularCost(regularCost);
+            
             logger.info("Bill assigned and saved successfully");
         } catch (Exception e) {
             logger.warn("New Bill unable to be created", e);

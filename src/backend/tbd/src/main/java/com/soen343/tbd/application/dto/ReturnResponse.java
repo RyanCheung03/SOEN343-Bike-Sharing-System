@@ -21,7 +21,8 @@ public class ReturnResponse {
     private String pricingStrategy;
     private Double baseFare;
     private Double perMinuteRate;
-    private Double totalAmount;
+    private Double regularCost;
+    private Double discountedCost;
 
 
 
@@ -29,7 +30,7 @@ public class ReturnResponse {
                           String startStationName, String endStationName,
                           Timestamp startTime, Timestamp endTime, Long durationMinutes,
                           Long billId, String pricingStrategy, Double baseFare, Double perMinuteRate,
-                          Double totalAmount, String userTier) {
+                          String userTier, Double regularCost, Double discountedCost) {
         this.tripId = tripId;
         this.bikeId = bikeId;
         this.userId = userId;
@@ -44,8 +45,9 @@ public class ReturnResponse {
         this.pricingStrategy = pricingStrategy;
         this.baseFare = baseFare;
         this.perMinuteRate = perMinuteRate;
-        this.totalAmount = totalAmount;
         this.userTier = userTier;
+        this.regularCost = regularCost;
+        this.discountedCost = discountedCost;
     }
 
     public Long getTripId() {
@@ -160,18 +162,27 @@ public class ReturnResponse {
         this.perMinuteRate = perMinuteRate;
     }
 
-    public Double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(Double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
     public String getUserTier() {
         return userTier;
     }
 
     public void setUserTier(String userTier) {
         this.userTier = userTier;
+    }
+
+    public Double getRegularCost() {
+        return regularCost;
+    }
+
+    public void setRegularCost(Double regularCost) {
+        this.regularCost = regularCost;
+    }
+
+    public Double getDiscountedCost() {
+        return discountedCost;
+    }
+
+    public void setDiscountedCost(Double discountedCost) {
+        this.discountedCost = discountedCost;
     }
 }

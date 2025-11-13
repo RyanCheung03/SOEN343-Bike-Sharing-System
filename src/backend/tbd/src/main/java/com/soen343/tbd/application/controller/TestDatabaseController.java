@@ -137,9 +137,9 @@ public class TestDatabaseController {
             tierCounts.put("GOLD", 0);
 
             for (User user : allUsers) {
-                String oldTier = user.getTier() != null ? user.getTier().name() : "NONE";
+                String oldTier = user.getTierType() != null ? user.getTierType().name() : "NONE";
                 loyaltyTierService.updateUserTier(user);
-                String newTier = user.getTier() != null ? user.getTier().name() : "NONE";
+                String newTier = user.getTierType() != null ? user.getTierType().name() : "NONE";
 
                 tierCounts.put(newTier, tierCounts.get(newTier) + 1);
 
@@ -187,7 +187,7 @@ public class TestDatabaseController {
             int tripsLastYear = tripRepository.countTripsForUserByIdSince(user.getUserId(), oneYearAgo);
 
             response.put("userEmail", email);
-            response.put("currentTier", user.getTier().name());
+            response.put("currentTier", user.getTierType().name());
             response.put("bronzeChecks", Map.of(
                 "missedReservations", missedReservations,
                 "unreturnedBikes", unreturnedBikes,
@@ -221,7 +221,7 @@ public class TestDatabaseController {
             // Calculate what tier they should be
             TierType calculatedTier = loyaltyTierService.calculateUserTier(user);
             response.put("calculatedTier", calculatedTier.name());
-            response.put("needsUpdate", !user.getTier().equals(calculatedTier));
+            response.put("needsUpdate", !user.getTierType().equals(calculatedTier));
 
             return ResponseEntity.ok(response);
 
@@ -392,7 +392,7 @@ public class TestDatabaseController {
             response.put("tierDescription", tierDescription);
             response.put("tripsCreated", totalTripsCreated);
             response.put("expectedTrips", expectedTrips);
-            response.put("currentTier", user.getTier().name());
+            response.put("currentTier", user.getTierType().name());
             response.put("message", "Successfully generated " + totalTripsCreated + " trips for " + targetTier + " tier. Use /api/test/update-all-tiers to update tier.");
 
             logger.info("Generated {} trips for user {}", totalTripsCreated, email);

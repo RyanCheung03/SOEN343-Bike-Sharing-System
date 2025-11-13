@@ -129,7 +129,7 @@ function NavigationBar({ fullName, role, handleLogout, handleBillingClick, handl
                             <p className="profile-role">{role}</p>
                             <div className={`tier-badge tier-${userTier.toLowerCase()}`}>
                                 <i className="fas fa-crown"></i>
-                                {userTier} TIER
+                                {userTier === "NONE" ? "BASIC" : userTier} TIER
                             </div>
                         </div>
                     </div>

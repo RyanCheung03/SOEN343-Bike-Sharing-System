@@ -171,11 +171,11 @@ public class UserEntity {
         this.cvc = cvc;
     }
 
-    public TierType getTier() {
+    public TierType getTierType() {
         return tier;
     }
 
-    public void setTier(TierType tier) {
+    public void setTierType(TierType tier) {
         this.tier = tier;
     }
 

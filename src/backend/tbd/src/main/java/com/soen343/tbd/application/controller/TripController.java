@@ -147,7 +147,7 @@ public class TripController {
         User user = userService.getUserById(trip.getUserId());
         String userFullName = user.getFullName();
         String userEmail = user.getEmail();
-        String userTier= user.getTier().name();
+        String userTier= user.getTierType().name();
 
         return new ReturnResponse(
                 trip.getTripId().value(),
@@ -164,8 +164,9 @@ public class TripController {
                 pricingStrategy.getPricingTypeName(),
                 pricingStrategy.getBaseFee(),
                 pricingStrategy.getPerMinuteRate(),
-                bill.getCost(),
-                userTier
+                userTier,
+                bill.getRegularCost(),
+                bill.getDiscountedCost()
         );
     }
 }
