@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-    <java.version>21</java.version>
+    	<java.version>21</java.version>
         <mapstruct.version>1.6.3</mapstruct.version>
     </properties>
 
@@ -105,25 +105,33 @@
 
 	<build>
 		<plugins>
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-compiler-plugin</artifactId>
-    <version>3.14.0</version>
-    <configuration>
-        <source>${java.version}</source>
-        <target>${java.version}</target>
-        <annotationProcessorPaths>
-            <path>
-                <groupId>org.mapstruct</groupId>
-                <artifactId>mapstruct-processor</artifactId>
-                <version>${mapstruct.version}</version>
-            </path>
-        </annotationProcessorPaths>
-    </configuration>
-</plugin>
+			<!-- Compiler plugin -->
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-compiler-plugin</artifactId>
+			    <version>3.14.0</version>
+			    <configuration>
+			        <source>${java.version}</source>
+			        <target>${java.version}</target>
+			        <annotationProcessorPaths>
+			            <path>
+			                <groupId>org.mapstruct</groupId>
+			                <artifactId>mapstruct-processor</artifactId>
+			                <version>${mapstruct.version}</version>
+			            </path>
+			        </annotationProcessorPaths>
+			    </configuration>
+			</plugin>
 
-        
-        </plugins>
-    </build>
+			<!-- Spring Boot plugin -->
+			<plugin>
+			    <groupId>org.springframework.boot</groupId>
+			    <artifactId>spring-boot-maven-plugin</artifactId>
+			    <configuration>
+			        <mainClass>com.soen343.tbd.TbdApplication</mainClass>
+			    </configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

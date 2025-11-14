@@ -35,6 +35,7 @@ const Home = () => {
     returnSuccessPopup,
     confirmReservation,
     reservationSuccessPopup,
+    reservationExpiredPopup,
     showCancelReservationPopup,
     // actions
     handleLogout,
@@ -51,6 +52,7 @@ const Home = () => {
     handleConfirmReservation,
     setConfirmReservation,
     setReservationSuccessPopup,
+    setReservationExpiredPopup,
     handleCancelActiveReservation,
     setShowCancelReservationPopup,
     handleConfirmRental,
@@ -91,6 +93,7 @@ const Home = () => {
         returnSuccessPopup,
         confirmReservation,
         reservationSuccessPopup,
+        reservationExpiredPopup,
         showCancelReservationPopup,
         activeBikeRental,
         tripSummaryData,
@@ -103,6 +106,7 @@ const Home = () => {
         handleConfirmReservation,
         setConfirmReservation,
         setReservationSuccessPopup,
+        setReservationExpiredPopup,
         handleCancelActiveReservation,
         setShowCancelReservationPopup
     };

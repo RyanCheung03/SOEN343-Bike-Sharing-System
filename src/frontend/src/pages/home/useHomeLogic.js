@@ -40,6 +40,8 @@ export default function useHomeLogic() {
     const [returnSuccessPopup, setReturnSuccessPopup] = useState(false);
     const [reservationSuccessPopup, setReservationSuccessPopup] = useState(false);
     const [tripSummaryData, setTripSummaryData] = useState(null);
+    const [reservationExpiredPopup, setReservationExpiredPopup] = useState(false);
+
 
     const fullName = localStorage.getItem('user_full_name');
     const role = localStorage.getItem('user_role');
@@ -62,9 +64,7 @@ export default function useHomeLogic() {
     const handleCancelEventRental = () => setRentalSuccessPopup(false);
     const onClickShowConfirmReturn = (dock, bike, station) => setConfirmReturn({ active: true, dock, bike, station });
     const handleCancelConfirmationReturn = () => setConfirmReturn({ active: false, dock: null, bike: null, station: null });
-    const handleCancelEventReturn = () => {
-        setReturnSuccessPopup(false);
-        setTripSummaryData(null);
+    const handleCancelEventReturn = () => {setReturnSuccessPopup(false); setTripSummaryData(null);
     };
     const handleShowReservation = (bike, station) => setConfirmReservation({ active: true, bike, station });
 
@@ -284,6 +284,8 @@ export default function useHomeLogic() {
                 clearInterval(interval);
                 setActiveReservation({ hasActiveReservation: false, bikeId: null, stationId: null, expiresAt: null, reservationId: null });
                 setTimeLeft(null);
+                // Show popup for expired reservation
+                setReservationExpiredPopup(true);
 
                 if (activeReservation.reservationId) {
                     const response = await axios.post("http://localhost:8080/api/reservations/end",
@@ -683,6 +685,8 @@ export default function useHomeLogic() {
         confirmReservation,
         reservationSuccessPopup,
         showCancelReservationPopup,
+        reservationExpiredPopup,
+
         // Actions
         handleLogout,
         handleSwitchRole,
@@ -697,6 +701,7 @@ export default function useHomeLogic() {
         handleConfirmReservation,
         setConfirmReservation,
         setReservationSuccessPopup,
+        setReservationExpiredPopup,
         handleCancelActiveReservation,
         setShowCancelReservationPopup,
         handleConfirmRental,
@@ -708,6 +713,6 @@ export default function useHomeLogic() {
         handleBikeMaintain,
         handleRemoveFromMaintenance,
         setActiveBikeMaintenanceRemoval,
-        operatorEvents
+        operatorEvents,
     };
 }
