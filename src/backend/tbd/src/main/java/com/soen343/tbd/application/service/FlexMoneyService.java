@@ -12,9 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /*  1 flex money = 1 cent, so 100 flex money = 1$
+    *NOTE: this service is being called in trip service/return 
     - checks if user is eligible for flex money obtention
     - can add flex money into user's balance
-   >> todo: can automatically reduce bill of next trip using existing balance
+    - can automatically reduce bill of next trip using existing balance
+   >> todo: make it display for front end
  */
 
 @Service
@@ -38,27 +40,51 @@ public class FlexMoneyService {
 
         if (fullness < 0.25) {
             Integer amount = 100;
-            addFlexMoney(userId, amount);
+            updateFlexMoneyBalance(userId, amount);
         }
     }
 
     @Transactional
-    public FlexMoneyDTO addFlexMoney(UserId userId, Integer amountToAdd) {
+    public FlexMoneyDTO updateFlexMoneyBalance(UserId userId, Integer amountToAddRemove) {
 
-        logger.info("User: {}, add flex money: {}", userId.value(), amountToAdd);
+        logger.info("UserID: {}, change to flex money: {}", userId.value(), amountToAddRemove);
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId.value()));
         
         Integer currentBalance = user.getFlexMoney();
-        Integer updatedBalance = currentBalance + amountToAdd;
+        Integer updatedBalance = currentBalance + amountToAddRemove;
         user.setFlexMoney(updatedBalance);
         userRepository.save(user);
 
-        logger.info("User: {} flex money updated: {}", userId.value(), updatedBalance);
+        logger.info("UserID: {} flex money updated: {}", userId.value(), updatedBalance);
 
-        return new FlexMoneyDTO(updatedBalance, amountToAdd, 0.0);
+        return new FlexMoneyDTO(updatedBalance, amountToAddRemove);
     }
 
+    @Transactional
+    public double reduceBillWithFlexMoney(UserId userId, double bill) {
+        logger.info("UserID: {}, total bill: {}", userId.value(), bill);
 
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId.value()));
+
+        Integer userFlexMoney = user.getFlexMoney();
+        double billProcessing = (bill*100);
+        Integer billInFlexMoney = (int) billProcessing;
+        double billAfterReduction;
+
+        Integer flexMoneyBillAfterReduction = billInFlexMoney - userFlexMoney;
+        // more flex money than bill
+        if (flexMoneyBillAfterReduction < 0) {
+            billAfterReduction = 0.0;
+            updateFlexMoneyBalance(userId, -billInFlexMoney);
+        } else { // use up all flex money
+            billAfterReduction = flexMoneyBillAfterReduction/100.0;
+            updateFlexMoneyBalance(userId, -userFlexMoney);
+        }
+
+        return billAfterReduction;
+
+    }
 }

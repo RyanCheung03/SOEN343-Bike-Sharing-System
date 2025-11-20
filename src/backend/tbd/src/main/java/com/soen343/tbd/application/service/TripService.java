@@ -38,6 +38,7 @@ public class TripService {
     private final StationService stationService;
     private final EventService eventService;
     private final FlexMoneyService flexMoneyService;
+    private final BillingService billingService;
 
     public TripService(BillRepository billRepository, 
             TripRepository tripRepository, 
@@ -47,7 +48,9 @@ public class TripService {
             StationSubject stationPublisher,
             StationService stationService, 
             EventService eventService, 
-            FlexMoneyService flexMoneyService) {
+            FlexMoneyService flexMoneyService
+            ,BillingService billingService
+        ) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.bikeRepository = bikeRepository;
@@ -57,6 +60,7 @@ public class TripService {
         this.stationService = stationService;
         this.eventService = eventService;
         this.flexMoneyService = flexMoneyService;
+        this.billingService = billingService;
     }
 
     /**
@@ -300,6 +304,7 @@ public class TripService {
         try {
             EntityStatus previousStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
             resultingBill = currentTrip.endTrip(selectedStation.getStationId());
+            // resultingBill = billingService.applyFlexMoney(resultingBill, userId);
             tripRepository.save(currentTrip);
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
 

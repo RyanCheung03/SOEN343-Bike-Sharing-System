@@ -2,13 +2,11 @@ package com.soen343.tbd.application.dto.billing;
 
 public class FlexMoneyDTO {
     private Integer currentBalance; // current amount of fake money
-    private Integer addMoney; // for adding more fake money
-    private Double reduceBill; // bills are double, convert to partially pay them
+    private Integer addRemoveMoney; // for adding more fake money, can be negative
 
-    public FlexMoneyDTO(Integer currentBalance, Integer addMoney, Double reduceBill) {
+    public FlexMoneyDTO(Integer currentBalance, Integer addRemoveMoney) {
         this.currentBalance = currentBalance;
-        this.addMoney = addMoney;
-        this.reduceBill = reduceBill;
+        this.addRemoveMoney = addRemoveMoney;
     }
 
     /*******************
@@ -25,20 +23,12 @@ public class FlexMoneyDTO {
         this.currentBalance = currentBalance;
     }
 
-    public Integer getAddMoney() {
-        return addMoney;
+    public Integer getAddRemoveMoney() {
+        return addRemoveMoney;
     }
 
-    public void setAddMoney(Integer addMoney) {
-        this.addMoney = addMoney;
-    }
-
-    public Double getReduceBill() {
-        return reduceBill;
-    }
-
-    public void setReduceBill(Double reduceBill) {
-        this.reduceBill = reduceBill;
+    public void setAddRemoveMoney(Integer addRemoveMoney) {
+        this.addRemoveMoney = addRemoveMoney;
     }
     
 }

@@ -8,6 +8,7 @@ import com.soen343.tbd.domain.model.Station;
 import com.soen343.tbd.domain.model.Trip;
 import com.soen343.tbd.domain.model.enums.BillStatus;
 import com.soen343.tbd.domain.model.ids.BillId;
+import com.soen343.tbd.domain.model.ids.UserId;
 import com.soen343.tbd.domain.model.user.User;
 import com.soen343.tbd.domain.repository.BillRepository;
 import com.soen343.tbd.domain.repository.StationRepository;
@@ -16,6 +17,7 @@ import com.soen343.tbd.domain.repository.UserRepository;
 import com.soen343.tbd.infrastructure.payment.PaymentGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.method.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,15 +35,21 @@ public class BillingService {
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
     private final PaymentGateway paymentGateway;
+    private final FlexMoneyService flexMoneyService;
 
-    public BillingService(BillRepository billRepository, TripRepository tripRepository,
-                          UserRepository userRepository, StationRepository stationRepository,
-                          PaymentGateway paymentGateway) {
+    public BillingService(BillRepository billRepository, 
+                        TripRepository tripRepository,
+                        UserRepository userRepository, 
+                        StationRepository stationRepository,
+                        PaymentGateway paymentGateway,
+                        FlexMoneyService flexMoneyService
+                ) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.stationRepository = stationRepository;
         this.paymentGateway = paymentGateway;
+        this.flexMoneyService = flexMoneyService;
     }
 
     @Transactional(readOnly = true)
@@ -137,6 +145,30 @@ public class BillingService {
 
         return true;
     }
+
+    /**
+     * Use flex money to reduce a bill's cost
+     */
+    @Transactional
+    public Bill applyFlexMoney(Bill bill, UserId userId) {
+        logger.info("Starting apply flex money to billID: {}", bill.getBillId().value());
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId.value()));
+
+        double originalCost = bill.getCost();
+        double reducedCost = flexMoneyService.reduceBillWithFlexMoney(userId, originalCost);
+
+        bill.setCost(reducedCost);
+
+        logger.info("billID: {}, reduction: {} -> {}, flex money balance: {}",
+                bill.getBillId().value(),
+                originalCost,
+                reducedCost,
+                user.getFlexMoney());
+
+        return bill;
+}
 
     private UserBillingHistoryResponse createBillingHistoryResponse(List<Trip> trips, List<Bill> bills, User user) {
         // Create a map of bills by trip ID for easy lookup
@@ -290,4 +322,5 @@ public class BillingService {
                 systemTripBills
         );
     }
+
 }
