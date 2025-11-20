@@ -74,7 +74,7 @@ public class FlexMoneyService {
         Integer billInFlexMoney = (int) billProcessing;
         double billAfterReduction;
 
-        Integer flexMoneyBillAfterReduction = billInFlexMoney - userFlexMoney;
+        int flexMoneyBillAfterReduction = billInFlexMoney - userFlexMoney;
         // more flex money than bill
         if (flexMoneyBillAfterReduction < 0) {
             billAfterReduction = 0.0;

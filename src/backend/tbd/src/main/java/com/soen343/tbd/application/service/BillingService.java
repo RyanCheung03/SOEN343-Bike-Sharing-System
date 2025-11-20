@@ -151,21 +151,11 @@ public class BillingService {
      */
     @Transactional
     public Bill applyFlexMoney(Bill bill, UserId userId) {
-        logger.info("Starting apply flex money to billID: {}", bill.getBillId().value());
-
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId.value()));
 
         double originalCost = bill.getCost();
         double reducedCost = flexMoneyService.reduceBillWithFlexMoney(userId, originalCost);
 
         bill.setCost(reducedCost);
-
-        logger.info("billID: {}, reduction: {} -> {}, flex money balance: {}",
-                bill.getBillId().value(),
-                originalCost,
-                reducedCost,
-                user.getFlexMoney());
 
         return bill;
 }

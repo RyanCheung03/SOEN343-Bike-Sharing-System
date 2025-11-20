@@ -304,7 +304,7 @@ public class TripService {
         try {
             EntityStatus previousStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
             resultingBill = currentTrip.endTrip(selectedStation.getStationId());
-            // resultingBill = billingService.applyFlexMoney(resultingBill, userId);
+            resultingBill = billingService.applyFlexMoney(resultingBill, userId);
             tripRepository.save(currentTrip);
             EntityStatus newStatus = EntityStatus.fromSpecificStatus(currentTrip.getStatus());
 
