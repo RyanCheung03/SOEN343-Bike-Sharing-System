@@ -30,4 +30,8 @@ public interface TripRepository {
     int countUnreturnedBikesByUser(UserId userId);
 
     int countTripsForUserBetween(UserId userId, LocalDateTime start, LocalDateTime end);
+
+    void deleteAll();
+
+    void deleteAllInBatch();
 }

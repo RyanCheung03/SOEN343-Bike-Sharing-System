@@ -13,9 +13,9 @@ import org.springframework.stereotype.Repository;
 import com.soen343.tbd.domain.model.enums.ReservationStatus;
 import com.soen343.tbd.infrastructure.persistence.entity.StationEntity;
 
-
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public class ReservationRepositoryAdapter implements ReservationRepository {
@@ -30,6 +30,24 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
         this.jpaReservationRepository = jpaReservationRepository;
         this.reservationMapper = reservationMapper;
         this.entityManager = entityManager;
+    }
+
+    @Override
+    public List<Reservation> findAll() {
+        return jpaReservationRepository.findAll()
+                .stream()
+                .map(reservationMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void deleteAll() {
+        jpaReservationRepository.deleteAll();
+    }
+
+    @Override
+    public void deleteAllInBatch() {
+        jpaReservationRepository.deleteAllInBatch();
     }
 
     @Override
