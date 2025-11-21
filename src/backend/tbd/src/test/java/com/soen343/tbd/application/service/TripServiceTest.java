@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -251,5 +254,46 @@ public class TripServiceTest {
         bill.setStatus(BillStatus.PENDING);
 
         return bill;
+    }
+
+        // ========== NEGATIVE TESTS FOR TRIP SERVICE ==========
+    @Test
+    void testRentBikeService_UserAlreadyHasTrip() {
+        // IDs local to this test
+        BikeId bikeId = new BikeId(1L);
+        DockId dockId = new DockId(1L);
+        UserId userId = new UserId(10L);
+        StationId stationId = new StationId(5L);
+    
+        Trip existingTrip = mock(Trip.class);
+        when(tripRepository.checkRentalsByUserId(userId)).thenReturn(Optional.of(existingTrip));
+    
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> tripService.rentBikeService(bikeId, dockId, userId, stationId));
+        System.out.println("[NEGATIVE TEST] Caught exception (user already has trip): " + exception.getMessage());
+    
+        assertEquals("User already has an ongoing trip", exception.getMessage());
+    }
+    
+    /**
+     * Negative test: TripService throws due to DB or unexpected exception.
+     */
+    @Test
+    void testRentBikeService_FirstTryCatch_Negative() {
+        // IDs local to this test
+        BikeId bikeId = new BikeId(1L);
+        DockId dockId = new DockId(1L);
+        UserId userId = new UserId(10L);
+        StationId stationId = new StationId(5L);
+    
+        when(tripRepository.checkRentalsByUserId(userId))
+            .thenThrow(new RuntimeException("DB connection failed"));
+    
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+            tripService.rentBikeService(bikeId, dockId, userId, stationId);
+        });
+        System.out.println("[NEGATIVE TEST] Caught exception (DB failure): " + thrown.getMessage());
+    
+        assertEquals("DB connection failed", thrown.getMessage());
     }
 }
