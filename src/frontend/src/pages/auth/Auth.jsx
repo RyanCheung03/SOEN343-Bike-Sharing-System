@@ -54,6 +54,14 @@ const Auth = () => {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    // Check for session expiration message
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired')) {
+      setError("Your session has expired. Please login again.");
+    }
+  }, [location]);
+
   const handleInputChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
