@@ -37,6 +37,7 @@ public abstract class UserMapper {
             rider.setExpiryMonth(entity.getExpiryMonth());
             rider.setExpiryYear(entity.getExpiryYear());
             rider.setCvc(entity.getCvc());
+            rider.setTierType(entity.getTierType());
 
             return rider;
         } else if ("OPERATOR".equals(entity.getRole())) {
@@ -49,6 +50,7 @@ public abstract class UserMapper {
                     entity.getUsername(),
                     entity.getCreatedAt()
             );
+            operator.setTierType(entity.getTierType());
 
             return operator;
         }
@@ -58,6 +60,7 @@ public abstract class UserMapper {
 
     // Domain -> Entity
     @Mapping(target = "userId", expression = "java(domain.getUserId() != null ? domain.getUserId().value() : null)")
+    @Mapping(target = "tierType", expression = "java(domain.getTierType())")
     @Mapping(target = "updatedAt", expression = "java(new java.sql.Timestamp(System.currentTimeMillis()))")
     // Ignore nested relationships since they're never used and cause performance issues
     @Mapping(target = "bills", ignore = true)

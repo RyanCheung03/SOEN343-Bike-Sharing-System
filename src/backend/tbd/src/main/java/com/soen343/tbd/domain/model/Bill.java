@@ -7,29 +7,35 @@ import com.soen343.tbd.domain.model.ids.UserId;
 
 public class Bill {
     private BillId billId;
-    private Double cost;
+    private Double regularCost; // Not persisted - calculated for display only
+    private Double discountedCost; // This is the actual cost paid, persisted as 'cost' in DB
     private TripId tripId;
     private UserId userId;
     private BillStatus status;
 
     // Constructor computes cost automatically based on Trip duration and pricing strategy
-    public Bill(Trip trip) {
+    public Bill(Trip trip, double discountRate) {
         this.billId = null; // Automatically set by db
         this.tripId = trip.getTripId();
         this.userId = trip.getUserId();
-        this.cost = calculateCost(trip);
+        this.regularCost = calculateCost(trip, 0.0);
+        this.discountedCost = calculateCost(trip, discountRate);
         this.status = BillStatus.PENDING;
     }
 
     // Default constructor for mapper
     public Bill() {}
 
-    private Double calculateCost(Trip trip) {
+    private Double calculateCost(Trip trip, double discountRate) {
         if (trip.getStartTime() == null || trip.getEndTime() == null) {
             return 0.0; // Trip hasn't ended yet
         }
 
-        return trip.getPricingStrategy().calculateCost(trip.calculateDurationInMinutes());
+        Double baseCost = trip.getPricingStrategy().calculateCost(trip.calculateDurationInMinutes());
+
+        // Apply discount
+        Double discount = baseCost * discountRate;
+        return baseCost - discount;
     }
 
     /* 
@@ -46,12 +52,20 @@ public class Bill {
         this.billId = billId;
     }
 
-    public Double getCost() {
-        return cost;
+    public Double getRegularCost() {
+        return regularCost;
     }
 
-    public void setCost(Double cost) {
-        this.cost = cost;
+    public void setRegularCost(Double regularCost) {
+        this.regularCost = regularCost;
+    }
+
+    public Double getDiscountedCost() {
+        return discountedCost;
+    }
+
+    public void setDiscountedCost(Double discountedCost) {
+        this.discountedCost = discountedCost;
     }
 
     public TripId getTripId() {

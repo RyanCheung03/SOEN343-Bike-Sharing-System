@@ -70,7 +70,7 @@ const Auth = () => {
           password: formData.password,
         });
 
-        const { token, email, fullName, role, username } = response.data || {};
+        const { token, email, fullName, role, username, tier } = response.data || {};
 
         // Ensure we actually received a valid token from the server
         if (!token || token === "undefined" || token === "null") {
@@ -84,6 +84,8 @@ const Auth = () => {
         localStorage.setItem("user_full_name", fullName);
         localStorage.setItem("user_role", role);
         localStorage.setItem("username", username);
+        localStorage.setItem("actual_user_role", role); // to keep track of actual role if switched
+        localStorage.setItem("tier", tier || 'NONE'); // Store user tier
 
         // Set default header for future requests
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
