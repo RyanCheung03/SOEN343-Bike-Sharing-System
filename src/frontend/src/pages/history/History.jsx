@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import NavigationBar from "../../components/navigationBar/NavigationBar";
+import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import "../home/Home.css";
 import "./History.css";
 
@@ -16,8 +17,15 @@ const History = () => {
   const [expandedTrips, setExpandedTrips] = useState({});
   const [selectedBill, setSelectedBill] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  
+  // Get user info from localStorage
+  const fullName = localStorage.getItem('user_full_name');
+  const role = localStorage.getItem('user_role');
   const userRole = localStorage.getItem("user_role");
+
+  // SSE connection retry variables and state
   const MAX_RETRIES = 5;
   const RETRY_DELAY = 2000;
   const [sseRetryCount, setSseRetryCount] = useState(0);
@@ -245,10 +253,58 @@ const History = () => {
 
   const filtered = filterTrips();
 
-  return (
-    <div className="history-container">
-      <h1>Trip History</h1>
-      <button onClick={() => navigate("/home")}>Back to Home</button>
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/');
+    };
+
+    const handleHomeClick = () => {
+        navigate('/home');
+    };
+
+    const handleBillingClick = () => {
+        navigate('/billing');
+    };
+
+    const handleViewHistory = () => {
+        window.location.reload();
+    };
+
+    const handlePricingClick = () => {
+        navigate('/pricing');
+    };
+
+    return (
+        <>
+
+        <NavigationBar
+            fullName={fullName}
+            role={role}
+            handleLogout={handleLogout}
+            handleBillingClick={handleBillingClick}
+            handleHomeClick={handleHomeClick}
+            handleViewHistory={handleViewHistory}
+            handlePricingClick={handlePricingClick}
+            activePage="history"
+        />
+
+        {loading && (
+            <LoadingSpinner
+            message={"Loading your billing history..."}
+            />
+        )}
+        
+        <div className="history-container">
+            
+            <h1>Trip History</h1>
 
       {/* Filters */}
       <div className="filters-section">
@@ -305,17 +361,17 @@ const History = () => {
 
       {loading ? (
         <p>Loading...</p>
-      ) : filtered.length === 0 ? (
+      ) : currentItems.length === 0 ? (
         <p>
           {allTrips.length === 0 ? "No trips found" : "No trips match filters"}
         </p>
       ) : (
         <div>
           <p>
-            {filtered.length} trip(s){" "}
-            {allTrips.length !== filtered.length && `of ${allTrips.length}`}
+            {currentItems.length} trip(s){" "}
+            {allTrips.length !== currentItems.length && `of ${allTrips.length}`}
           </p>
-          {filtered.map((trip) => (
+          {currentItems.map((trip) => (
             <div key={trip.tripId} className="trip-card">
               <h3>Trip #{trip.tripId}</h3>
               <p>User ID: {trip.userId}</p>
@@ -366,6 +422,37 @@ const History = () => {
           ))}
         </div>
       )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="pagination">
+                    <button 
+                        onClick={() => paginate(currentPage - 1)} 
+                        disabled={currentPage === 1}
+                        className="pagination-btn"
+                    >
+                        &laquo; Prev
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i + 1}
+                            onClick={() => paginate(i + 1)}
+                            className={`pagination-btn ${currentPage === i + 1 ? 'active' : ''}`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                    
+                    <button 
+                        onClick={() => paginate(currentPage + 1)} 
+                        disabled={currentPage === totalPages}
+                        className="pagination-btn"
+                    >
+                        Next &raquo;
+                    </button>
+                </div>
+            )}
 
       {/* Bill Details Popup */}
       {selectedBill && (
@@ -422,7 +509,8 @@ const History = () => {
           </div>
         </div>
       )}
-    </div>
+        </div>
+        </>
   );
 };
 

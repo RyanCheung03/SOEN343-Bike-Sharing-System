@@ -9,6 +9,7 @@ import PopupManager from '../../components/PopupManager';
 import LoadingSpinner from '../../components/loadingSpinner/LoadingSpinner';
 import MaintenanceTracker from '../../components/maintenanceTracker/MaintenanceTracker';
 import OperatorConsole from "../../components/operatorConsole/OperatorConsole";
+import TierChangePopup from "../../components/tierChangePopup/TierChangePopup";
 import './Home.css';
 
 const Home = () => {
@@ -27,7 +28,7 @@ const Home = () => {
     activeBikeRental,
     bikesUnderMaintenance,
     activeBikeMaintenanceRemoval,
-        tripSummaryData,
+    tripSummaryData,
     // popups & control
     confirmRental,
     rentalSuccessPopup,
@@ -35,9 +36,14 @@ const Home = () => {
     returnSuccessPopup,
     confirmReservation,
     reservationSuccessPopup,
+    reservationExpiredPopup,
     showCancelReservationPopup,
+    showTierPopup,
+    tierChangeData,
+    handleCloseTierPopup,
     // actions
     handleLogout,
+      handleSwitchRole,
     handleViewHistory,
     fetchStations,
     onClickShowConfirmRental,
@@ -50,6 +56,7 @@ const Home = () => {
     handleConfirmReservation,
     setConfirmReservation,
     setReservationSuccessPopup,
+    setReservationExpiredPopup,
     handleCancelActiveReservation,
     setShowCancelReservationPopup,
     handleConfirmRental,
@@ -90,6 +97,7 @@ const Home = () => {
         returnSuccessPopup,
         confirmReservation,
         reservationSuccessPopup,
+        reservationExpiredPopup,
         showCancelReservationPopup,
         activeBikeRental,
         tripSummaryData,
@@ -102,6 +110,7 @@ const Home = () => {
         handleConfirmReservation,
         setConfirmReservation,
         setReservationSuccessPopup,
+        setReservationExpiredPopup,
         handleCancelActiveReservation,
         setShowCancelReservationPopup
     };
@@ -127,6 +136,7 @@ const Home = () => {
                 fullName={fullName}
                 role={role}
                 handleLogout={handleLogout}
+                handleSwitchRole={handleSwitchRole}
                 handleViewHistory={handleViewHistory}
                 handleBillingClick={handleBillingClick}
                 handleHomeClick={handleHomeClick}
@@ -216,6 +226,13 @@ const Home = () => {
                 </div>
             </div>
             <PopupManager {...popupProps} />
+            {showTierPopup && (
+                <TierChangePopup
+                    oldTier={tierChangeData.oldTier}
+                    newTier={tierChangeData.newTier}
+                    onClose={handleCloseTierPopup}
+                />
+            )}
         </div>
     );
 };

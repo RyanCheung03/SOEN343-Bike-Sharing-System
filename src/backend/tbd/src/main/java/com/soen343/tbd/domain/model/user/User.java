@@ -1,5 +1,6 @@
 package com.soen343.tbd.domain.model.user;
 
+import com.soen343.tbd.domain.model.enums.TierType;
 import com.soen343.tbd.domain.model.ids.UserId;
 
 import java.sql.Timestamp;
@@ -19,9 +20,12 @@ public abstract class User {
     private String expiryMonth;
     private String expiryYear;
     private String cvc;
+    private TierType tier = TierType.NONE;
+    private Integer flexmoney;
+    private boolean tierDowngradedNotificationPending = false;
 
     public User(UserId userId, String fullName, String email, String password,
-                String address, String username, String role, Timestamp createdAt) {
+                String address, String username, String role, Timestamp createdAt, Integer flexmoney) {
         this.userId = userId;
         this.fullName = fullName;
         this.email = email;
@@ -30,6 +34,7 @@ public abstract class User {
         this.role = role;
         this.createdAt = createdAt;
         this.username = username;
+        this.flexmoney = flexmoney;
     }
 
     public UserId getUserId() {
@@ -132,16 +137,57 @@ public abstract class User {
         this.cvc = cvc;
     }
 
+    public TierType getTierType() {
+        return tier;
+    }
+
+    public void setTierType(TierType tier) {
+        this.tier = tier;
+    }
+
+    // Convenience methods for tier benefits
+    public double getCurrentDiscount() {
+        return tier.getLoyaltyTier().getDiscountRate();
+    }
+
+    public int getExtraReservationTime() {
+        return tier.getLoyaltyTier().getExtraReservationTime();
+    }
+
+    public Integer getFlexMoney() {
+        return flexmoney;
+    }
+
+    public void setFlexMoney(Integer flexmoney) {
+        this.flexmoney = flexmoney;
+    }
+
+    public boolean isTierDowngradedNotificationPending() {
+        return tierDowngradedNotificationPending;
+    }
+
+    public void setTierDowngradedNotificationPending(boolean tierDowngradedNotificationPending) {
+        this.tierDowngradedNotificationPending = tierDowngradedNotificationPending;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(userId, user.userId) && Objects.equals(fullName, user.fullName) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && Objects.equals(address, user.address) && Objects.equals(username, user.username) && Objects.equals(role, user.role) && Objects.equals(createdAt, user.createdAt);
+        return Objects.equals(userId, user.userId) 
+        && Objects.equals(fullName, user.fullName) 
+        && Objects.equals(email, user.email) 
+        && Objects.equals(password, user.password) 
+        && Objects.equals(address, user.address) 
+        && Objects.equals(username, user.username) 
+        && Objects.equals(role, user.role) 
+        && Objects.equals(createdAt, user.createdAt) 
+        && Objects.equals(flexmoney, user.flexmoney);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, fullName, email, password, address, username, role, createdAt);
+        return Objects.hash(userId, fullName, email, password, address, username, role, createdAt, flexmoney);
     }
 
     @Override
@@ -154,7 +200,8 @@ public abstract class User {
                 ", address='" + address + '\'' +
                 ", username='" + username + '\'' +
                 ", role='" + role + '\'' +
-                ", createdAt=" + createdAt +
+                ", createdAt=" + createdAt + '\'' +
+                ", flexmoney=" + flexmoney +
                 '}';
     }
 }

@@ -6,33 +6,35 @@ import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 
 function Billing() {
-  const [billingData, setBillingData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedBill, setSelectedBill] = useState(null);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({
-    cardNumber: "",
-    cardHolderName: "",
-    expiryMonth: "",
-    expiryYear: "",
-    cvc: "",
-  });
-  const [sortBy, setSortBy] = useState("date-desc"); // date-desc, date-asc, price-desc, price-asc
-  const [filterStatus, setFilterStatus] = useState("all"); // all, pending, paid
-  const [searchUserId, setSearchUserId] = useState(""); // Search by User ID (operator only)
-  const [isConnected, setIsConnected] = useState(false);
-  const navigate = useNavigate();
+    const [billingData, setBillingData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedBill, setSelectedBill] = useState(null);
+    const [paymentProcessing, setPaymentProcessing] = useState(false);
+    const [paymentForm, setPaymentForm] = useState({
+        cardNumber: "",
+        cardHolderName: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvc: "",
+    });
+    const [sortBy, setSortBy] = useState("date-desc"); // date-desc, date-asc, price-desc, price-asc
+    const [filterStatus, setFilterStatus] = useState("all"); // all, pending, paid
+    const [searchUserId, setSearchUserId] = useState(""); // Search by User ID (operator only)
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(5);
+    const [isConnected, setIsConnected] = useState(false);
+    const navigate = useNavigate();
 
-  // Use the same localStorage keys as Home page
-  const fullName = localStorage.getItem("user_full_name");
-  const role = localStorage.getItem("user_role");
-  const userEmail = localStorage.getItem("user_email");
+    // Use the same localStorage keys as Home page
+    const fullName = localStorage.getItem("user_full_name");
+    const role = localStorage.getItem("user_role");
+    const userEmail = localStorage.getItem("user_email");
 
-  const MAX_RETRIES = 5;
-  const RETRY_DELAY = 2000;
-  const [sseRetryCount, setSseRetryCount] = useState(0);
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 2000;
+    const [sseRetryCount, setSseRetryCount] = useState(0);
 
-  useEffect(() => {
+    useEffect(() => {
     let retryTimer = null;
     const eventSource = new EventSource(
       "http://localhost:8080/api/stations/subscribe",
@@ -351,6 +353,15 @@ function Billing() {
     return filteredBills;
   };
 
+    // Pagination Logic
+    const filteredBills = getFilteredAndSortedBills();
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentBills = filteredBills.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredBills.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="home-container">
       {isLoading && (
@@ -447,7 +458,7 @@ function Billing() {
 
         <div className="dashboard-grid">
           {/* Replace map-container with billing cards */}
-          <div className="map-container">
+          <div className="map-container billing-container">
             <h2 className="map-title">Bill History</h2>
 
             <div className="billing-content">
@@ -472,13 +483,13 @@ function Billing() {
                   ? billingData.allTripBills?.length > 0
                   : billingData.tripBills?.length > 0) && (
                   <div className="trip-bills-list">
-                    {getFilteredAndSortedBills().length === 0 ? (
+                    {filteredBills.length === 0 ? (
                       <div className="empty-message">
                         <i className="fas fa-filter"></i>
                         <p>No bills match the selected filters.</p>
                       </div>
                     ) : (
-                      getFilteredAndSortedBills().map((tripBill) => (
+                      currentBills.map((tripBill) => (
                         <div key={tripBill.tripId} className="trip-bill-card">
                           {/* Card Header */}
                           <div className="card-header">
@@ -586,23 +597,55 @@ function Billing() {
                             </div>
                           </div>
 
-                          {/* Pay Now Button - Only show for riders with pending bills */}
-                          {role !== "OPERATOR" &&
-                            tripBill.billStatus === "PENDING" && (
-                              <button
-                                className="pay-now-btn"
-                                onClick={() => handlePayNow(tripBill)}
-                              >
-                                <i className="fas fa-credit-card"></i> Pay Now
-                              </button>
+                                            {/* Pay Now Button - Only show for riders with pending bills */}
+                                            {role !== 'OPERATOR' && tripBill.billStatus === 'PENDING' && (
+                                                <button
+                                                    className="pay-now-btn"
+                                                    onClick={() => handlePayNow(tripBill)}
+                                                >
+                                                    <i className="fas fa-credit-card"></i> Pay Now
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                    )}
+                                </div>
                             )}
+                            
                         </div>
-                      ))
-                    )}
-                  </div>
-                )}
-            </div>
-          </div>
+                        {/* Pagination Controls */}
+                        {filteredBills.length > itemsPerPage && (
+                            <div className="pagination">
+                                <button
+                                    onClick={() => paginate(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="pagination-btn"
+                                >
+                                    <i className="fas fa-chevron-left"></i> Previous
+                                </button>
+                                
+                                <div className="pagination-numbers">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                                        <button
+                                            key={number}
+                                            onClick={() => paginate(number)}
+                                            className={`pagination-number ${currentPage === number ? 'active' : ''}`}
+                                        >
+                                            {number}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => paginate(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="pagination-btn"
+                                >
+                                    Next <i className="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
           {/* Sidebar with Payment Component */}
           <div className="sidebar-container">
@@ -648,30 +691,32 @@ function Billing() {
                   </div>
                 </div>
 
-                <div className="payment-breakdown">
-                  <h4>Payment Breakdown</h4>
-                  <div className="breakdown-item">
-                    <span>Base Fare</span>
-                    <span>${selectedBill.baseFare.toFixed(2)}</span>
-                  </div>
-                  <div className="breakdown-item">
-                    <span>
-                      Time Charge ({selectedBill.durationMinutes} min × $
-                      {selectedBill.perMinuteRate.toFixed(2)})
-                    </span>
-                    <span>
-                      $
-                      {(
-                        selectedBill.durationMinutes *
-                        selectedBill.perMinuteRate
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="breakdown-total">
-                    <span>Total Amount</span>
-                    <span>${selectedBill.totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
+                                <div className="payment-breakdown">
+                                    <h4>Payment Breakdown</h4>
+                                    <div className="breakdown-item">
+                                        <span>Base Fare</span>
+                                        <span>${selectedBill.baseFare.toFixed(2)}</span>
+                                    </div>
+                                    <div className="breakdown-item">
+                                        <span>
+                                            {selectedBill.durationMinutes === 0 
+                                                ? `Time Charge (${Math.round((new Date(selectedBill.endTime) - new Date(selectedBill.startTime)) / 1000)} sec × $${(selectedBill.perMinuteRate / 60).toFixed(4)})`
+                                                : `Time Charge (${selectedBill.durationMinutes} min × $${selectedBill.perMinuteRate.toFixed(2)})`
+                                            }
+                                        </span>
+                                        <span>${(selectedBill.regularCost - selectedBill.baseFare).toFixed(2)}</span>
+                                    </div>
+                                    {(selectedBill.regularCost - selectedBill.totalAmount >= 0.01) && (
+                                        <div className="breakdown-item discount-row">
+                                            <span>Total Savings (Tier + FlexMoney)</span>
+                                            <span>-${(selectedBill.regularCost - selectedBill.totalAmount).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="breakdown-total">
+                                        <span>Total Amount</span>
+                                        <span>${selectedBill.totalAmount.toFixed(2)}</span>
+                                    </div>
+                                </div>
 
                 <form onSubmit={handlePaymentSubmit} className="payment-form">
                   <div className="form-group">

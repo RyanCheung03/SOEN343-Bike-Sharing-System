@@ -1,5 +1,6 @@
 package com.soen343.tbd.infrastructure.persistence.entity;
 
+import com.soen343.tbd.domain.model.enums.TierType;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -53,12 +54,18 @@ public class UserEntity {
     @Column(name = "cvc")
     private String cvc;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tier", nullable = false)
+    private TierType tier = TierType.NONE;
+
     @OneToMany(mappedBy="user", fetch = FetchType.LAZY)
     List<BillEntity> bills;
 
     @OneToMany(mappedBy="user", fetch = FetchType.LAZY)
     List<TripEntity> trips;
 
+    @Column(name = "flexmoney")
+    private Integer flexmoney;
 
     /* 
     -----------------------
@@ -166,6 +173,14 @@ public class UserEntity {
         this.cvc = cvc;
     }
 
+    public TierType getTierType() {
+        return tier;
+    }
+
+    public void setTierType(TierType tier) {
+        this.tier = tier;
+    }
+
     public List<BillEntity> getBills() {
         return bills;
     }
@@ -180,6 +195,14 @@ public class UserEntity {
 
     public void setTrips(List<TripEntity> trips) {
         this.trips = trips;
+    }
+
+    public Integer getFlexMoney() {
+        return flexmoney;
+    }
+
+    public void setFlexMoney(Integer flexmoney) {
+        this.flexmoney = flexmoney;
     }
 
 }
