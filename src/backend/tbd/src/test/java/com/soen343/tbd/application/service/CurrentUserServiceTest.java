@@ -39,6 +39,7 @@ class CurrentUserServiceTest {
                 "123 Street",
                 "johndoe",
                 new Timestamp(System.currentTimeMillis()),
+                null,
                 null
         );
     }

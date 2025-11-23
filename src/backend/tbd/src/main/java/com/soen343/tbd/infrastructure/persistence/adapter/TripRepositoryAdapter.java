@@ -31,6 +31,16 @@ public class TripRepositoryAdapter implements TripRepository {
     }
 
     @Override
+    public void deleteAll() {
+        jpaTripRepository.deleteAll();
+    }
+
+    @Override
+    public void deleteAllInBatch() {
+        jpaTripRepository.deleteAllInBatch();
+    }
+
+    @Override
     public Optional<Trip> checkRentalsByUserId(UserId userId) {
         return jpaTripRepository.findByUser_UserIdAndStatus(userId.value(), TripStatus.ONGOING)
                 .map(tripMapper::toDomain);

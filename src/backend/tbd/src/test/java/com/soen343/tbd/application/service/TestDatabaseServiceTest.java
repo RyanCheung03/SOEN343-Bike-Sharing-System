@@ -23,9 +23,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
 import java.sql.Timestamp;
-
 
 
 import java.util.Optional;
@@ -36,12 +36,17 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class TestDatabaseServiceTest {
 
-    @Mock private BikeRepository bikeRepository;
-    @Mock private DockRepository dockRepository;
-    @Mock private StationRepository stationRepository;
-    @Mock private UserRepository userRepository;
+    @Mock
+    private BikeRepository bikeRepository;
+    @Mock
+    private DockRepository dockRepository;
+    @Mock
+    private StationRepository stationRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @InjectMocks private TestDatabaseService testDatabaseService;
+    @InjectMocks
+    private TestDatabaseService testDatabaseService;
 
     private Bike bike;
     private Dock dock;
@@ -50,49 +55,51 @@ class TestDatabaseServiceTest {
 
     @BeforeEach
     void setUp() {
-    
+
         bike = new Bike(
-            new BikeId(1L),              
-            new DockId(1L),             
-            BikeStatus.AVAILABLE,         
-            BikeType.E_BIKE,               
-            null                          
+                new BikeId(1L),
+                new DockId(1L),
+                BikeStatus.AVAILABLE,
+                BikeType.E_BIKE,
+                null
         );
 
-    
+
         // Dock with proper status and associated station
         dock = new Dock(
-            new DockId(1L),
-            new StationId(1L),
-            DockStatus.OCCUPIED    
+                new DockId(1L),
+                new StationId(1L),
+                DockStatus.OCCUPIED
         );
-    
+
         // Station with proper availability and status, contains the dock
         station = new Station(
-            new StationId(1L),
-            "Station A",
-            StationAvailability.FULL,
-            StationStatus.ACTIVE,
-            "Position A",
-            "123 Street",
-            10,
-            1,               
-            List.of(dock)       
+                new StationId(1L),
+                "Station A",
+                StationAvailability.FULL,
+                StationStatus.ACTIVE,
+                "Position A",
+                "123 Street",
+                10,
+                1,
+                List.of(dock)
         );
-    
+
         // User with realistic role and creation timestamp
         user = new User(
-            new UserId(1L),
-            "John Doe",
-            "john@example.com",
-            "password",
-            "123 Street",
-            "johndoe",
-            "RIDER",
-            new Timestamp(System.currentTimeMillis())
-        ) {};
+                new UserId(1L),
+                "John Doe",
+                "john@example.com",
+                "password",
+                "123 Street",
+                "johndoe",
+                "RIDER",
+                new Timestamp(System.currentTimeMillis()),
+                null
+        ) {
+        };
     }
-    
+
     @Test
     void testGetBikeById() {
         when(bikeRepository.findById(new BikeId(1L))).thenReturn(Optional.of(bike));

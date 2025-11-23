@@ -16,7 +16,7 @@ public class ITInitializer {
     public static User initializeRider() {
         User rider = new Rider(null, "John Doe", "IT@email.com",
                 "password", "123 Main St", "johndoe",
-                new java.sql.Timestamp(System.currentTimeMillis()), null);
+                new java.sql.Timestamp(System.currentTimeMillis()), null, 0);
         return rider;
     }
 

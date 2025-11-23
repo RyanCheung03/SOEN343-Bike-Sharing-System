@@ -14,6 +14,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 import com.soen343.tbd.infrastructure.persistence.entity.DockEntity;
 
@@ -31,6 +32,21 @@ public class DockRepositoryAdapter implements DockRepository {
         this.dockMapper = mapper;
         this.entityManager = entityManager;
         this.environment = environment;
+    }
+
+    @Override
+    public List<Dock> findAll() {
+        return jpaDockRepository.findAll()
+                .stream()
+                .map(dockMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void saveAll(List<Dock> docks) {
+        for (Dock dock : docks) {
+            save(dock);
+        }
     }
 
     @Override

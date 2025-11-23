@@ -3,9 +3,7 @@ package com.soen343.tbd.application.service;
 import com.soen343.tbd.domain.model.Bike;
 import com.soen343.tbd.domain.model.Dock;
 import com.soen343.tbd.domain.model.Station;
-import com.soen343.tbd.domain.model.enums.BikeStatus;
-import com.soen343.tbd.domain.model.enums.DockStatus;
-import com.soen343.tbd.domain.model.enums.StationStatus;
+import com.soen343.tbd.domain.model.enums.*;
 import com.soen343.tbd.domain.model.ids.BikeId;
 import com.soen343.tbd.domain.model.ids.DockId;
 import com.soen343.tbd.domain.model.ids.StationId;
@@ -109,8 +107,10 @@ public class OperatorServiceTest {
         Bike testBike = initializeTestBike(bikeId, sourceDockId, null);
         Dock sourceDock = initializeTestDock(sourceDockId, sourceStationId, DockStatus.OCCUPIED);
         Dock targetDock = initializeTestDock(targetDockId, targetStationId, DockStatus.EMPTY);
-        Station sourceStation = intitializeTestStation(sourceStationId, StationStatus.ACTIVE, sourceDock);
-        Station targetStation = intitializeTestStation(targetStationId, StationStatus.ACTIVE, targetDock);
+        Station sourceStation = intitializeTestStation(sourceStationId, StationAvailability.OCCUPIED,
+                StationStatus.ACTIVE, sourceDock);
+        Station targetStation = intitializeTestStation(targetStationId, StationAvailability.EMPTY,
+                StationStatus.ACTIVE, targetDock);
 
         when(dto.getBikeId()).thenReturn(1L);
         when(dto.getSourceDockId()).thenReturn(2L);
@@ -198,16 +198,17 @@ public class OperatorServiceTest {
     }
 
     private Bike initializeTestBike(BikeId bikeId, DockId dockId, BikeStatus status) {
-        return new Bike(bikeId, dockId, status, null, null);
+        return new Bike(bikeId, dockId, status, BikeType.STANDARD, null);
     }
 
     private Dock initializeTestDock(DockId dockId, StationId stationId, DockStatus status) {
         return new Dock(dockId, stationId, status);
     }
 
-    private Station intitializeTestStation(StationId stationId, StationStatus status, Dock dock) {
-        return new Station(stationId, null, null,
-                status, null, null, 0, 0,
+    private Station intitializeTestStation(StationId stationId, StationAvailability availability,
+                                           StationStatus status, Dock dock) {
+        return new Station(stationId, null, availability,
+                status, null, null, 3, 0,
                 List.of(dock,
                         new Dock(null, stationId, DockStatus.EMPTY),
                         new Dock(null, stationId, DockStatus.EMPTY)));

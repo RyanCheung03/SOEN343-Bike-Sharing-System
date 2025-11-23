@@ -6,6 +6,7 @@ import com.soen343.tbd.domain.model.ids.UserId;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 public interface ReservationRepository {
     Optional<Reservation> checkActiveReservationByUserId(UserId userId);
@@ -16,4 +17,9 @@ public interface ReservationRepository {
 
     int missedReservationscount(UserId userId, LocalDateTime oneYearAgo);
 
+    void deleteAll();
+
+    void deleteAllInBatch();
+
+    List<Reservation> findAll();
 }

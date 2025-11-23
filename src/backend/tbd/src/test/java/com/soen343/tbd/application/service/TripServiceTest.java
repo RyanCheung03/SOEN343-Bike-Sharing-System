@@ -1,6 +1,7 @@
 package com.soen343.tbd.application.service;
 
 import com.soen343.tbd.application.exception.StationFullException;
+import com.soen343.tbd.application.observer.SSEStationObserver;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.*;
 import com.soen343.tbd.domain.model.enums.*;
@@ -64,6 +65,18 @@ public class TripServiceTest {
 
     @Mock
     private StationSubject stationPublisher;
+
+    @Mock
+    private BillingService billingService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private SSEStationObserver sseStationObserver;
+
+    @Mock
+    private FlexMoneyService flexMoneyService;
 
     @InjectMocks
     private TripService tripService;
@@ -203,6 +216,7 @@ public class TripServiceTest {
         Trip trip = createTripForTests(tripId, bikeId, userId, startStationId);
 
         Bill bill = createBillForTests(billId);
+        bill.setUserId(userId);
 
         User user = mock(User.class);
         when(user.getCurrentDiscount()).thenReturn(0.1);
@@ -216,6 +230,7 @@ public class TripServiceTest {
         when(userService.getUserById(userId)).thenReturn(user);
         when(tripRepository.save(any(Trip.class))).thenReturn(trip);
         when(billRepository.save(any(Bill.class))).thenReturn(bill);
+        when(billingService.applyFlexMoney(any(Bill.class), eq(userId))).thenReturn(bill);
 
         // Call the service
         Map<String, Object> response = tripService.returnBikeService(tripId, bikeId, dockId, userId, endStationId);
@@ -240,8 +255,8 @@ public class TripServiceTest {
         verify(tripRepository).findById(tripId);
         verify(bikeRepository).findById(bikeId);
         verify(dockRepository).findById(dockId);
-        verify(stationRepository).findById(endStationId);
-        verify(stationRepository).findById(startStationId);
+        verify(stationRepository, atLeastOnce()).findById(endStationId);
+        verify(stationRepository, atLeastOnce()).findById(startStationId);
         verify(userService, times(2)).getUserById(userId);
         verify(tripRepository, times(2)).save(trip);
         verify(billRepository).save(any(Bill.class));

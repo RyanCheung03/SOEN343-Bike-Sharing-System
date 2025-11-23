@@ -122,13 +122,14 @@ public class HappyPathScenarioIT {
                 rider.getUserId()
         );
 
-        // Step 2: Rider unlocks the reserved bike at Station A and completes the reservation
+        // Step 2: Rider unlocks the reserved bike at Station A
         Trip trip = tripService.rentBikeService(bike.getBikeId(), dockAtStationA.getDockId(),
                 rider.getUserId(), stationA.getStationId());
 
+        // Step 3: Complete the reservation
         reservationService.completeReservation(reservation.getReservationId());
 
-        // Step 3: Rider returns the bike to Station B
+        // Step 4: Rider returns the bike to Station B
         Map<String, Object> serviceResponse = tripService.returnBikeService(trip.getTripId(), bike.getBikeId(), dockAtStationB.getDockId(),
                 rider.getUserId(), stationB.getStationId());
 

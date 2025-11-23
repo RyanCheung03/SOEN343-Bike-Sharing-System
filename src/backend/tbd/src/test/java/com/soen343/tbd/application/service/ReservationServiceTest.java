@@ -1,16 +1,16 @@
 package com.soen343.tbd.application.service;
 
-import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.Bike;
 import com.soen343.tbd.domain.model.Reservation;
 import com.soen343.tbd.domain.model.Station;
 import com.soen343.tbd.domain.model.enums.BikeStatus;
-import com.soen343.tbd.domain.model.enums.BikeType;
 import com.soen343.tbd.domain.model.enums.ReservationStatus;
 import com.soen343.tbd.domain.model.ids.*;
+import com.soen343.tbd.domain.model.user.User;
 import com.soen343.tbd.domain.repository.BikeRepository;
 import com.soen343.tbd.domain.repository.ReservationRepository;
 import com.soen343.tbd.domain.repository.StationRepository;
+import com.soen343.tbd.domain.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +32,12 @@ public class ReservationServiceTest {
 
     @Mock
     private StationRepository stationRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private LoyaltyTierService loyaltyTierService;
            
     @InjectMocks
     private ReservationService reservationService;
@@ -73,12 +79,15 @@ public class ReservationServiceTest {
         StationId stationId = new StationId(101L);
 
         Bike testBike = new Bike (bikeId, null, BikeStatus.AVAILABLE, null, null);
+        User testUser = mock(User.class);
 
         when(reservationRepository.checkActiveReservationByUserId(userId))
             .thenReturn(Optional.empty())
             .thenReturn(Optional.of(new Reservation(bikeId, stationId, userId, new java.sql.Timestamp(System.currentTimeMillis()), new java.sql.Timestamp(System.currentTimeMillis() + 15000))));
         when(bikeRepository.findById(bikeId)).thenReturn(Optional.of(testBike));
         when(stationRepository.findById(stationId)).thenReturn(Optional.of(testStation));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(loyaltyTierService.updateUserTier(testUser)).thenReturn(false);
         when(testStation.getStationId()).thenReturn(stationId);
 
         Reservation response = reservationService.createReservation(bikeId, stationId, userId);

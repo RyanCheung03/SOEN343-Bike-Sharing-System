@@ -203,14 +203,14 @@ public class OperatorService {
 
         // increase target station count
         // Determine previous status for event logging
-        previousStatus = EntityStatus.fromSpecificStatus(targetStation.getStationStatus());
+        previousStatus = EntityStatus.fromSpecificStatus(targetStation.getStationAvailability());
 
         targetStation.incrementBikesDocked();
         stationRepository.save(targetStation);
         logger.info("Target station {} bike count++", targetStationId.value());
 
         // Determine new status for event logging
-        newStatus = EntityStatus.fromSpecificStatus(targetStation.getStationStatus());
+        newStatus = EntityStatus.fromSpecificStatus(targetStation.getStationAvailability());
 
         Event eventTargetStation = null;
 
@@ -294,6 +294,7 @@ public class OperatorService {
             new MaintenanceUpdateDTO(
                 bike.getBikeId().value(),
                 bike.getStatus().name(),
+                bike.getBikeType().name(),
                 stationId.value(),
                 "", // station name not needed here
                 dockId.value(),
@@ -367,6 +368,7 @@ public class OperatorService {
             new MaintenanceUpdateDTO(
                 bike.getBikeId().value(),
                 bike.getStatus().name(),
+                bike.getBikeType().name(),
                 stationId.value(),
                 "", // station name not needed here
                 dockId.value(),

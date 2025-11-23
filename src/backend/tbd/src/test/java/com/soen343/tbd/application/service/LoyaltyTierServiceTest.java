@@ -26,104 +26,109 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 class LoyaltyTierServiceTest {
 
-    @Mock private TripRepository tripRepository;
-    @Mock private ReservationRepository reservationRepository;
-    @Mock private UserRepository userRepository;
+    @Mock
+    private TripRepository tripRepository;
+    @Mock
+    private ReservationRepository reservationRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @InjectMocks private LoyaltyTierService loyaltyTierService;
+    @InjectMocks
+    private LoyaltyTierService loyaltyTierService;
 
     private User testUser;
 
     @BeforeEach
     void setUp() {
         testUser = new Rider(
-            new UserId(1L),
-            "John Doe",
-            "john@example.com",
-            "password",
-            "123 Street",
-            "johndoe",
-            Timestamp.valueOf("2023-01-01 00:00:00"),
-            "visa-1234"
+                new UserId(1L),
+                "John Doe",
+                "john@example.com",
+                "password",
+                "123 Street",
+                "johndoe",
+                Timestamp.valueOf("2023-01-01 00:00:00"),
+                "visa-1234",
+                null
         );
     }
 
     @Test
     void testUpdateUserTier_Bronze() {
         when(reservationRepository.missedReservationscount(eq(testUser.getUserId()), any()))
-            .thenReturn(0);
-    
+                .thenReturn(0);
+
         when(tripRepository.countUnreturnedBikesByUser(eq(testUser.getUserId())))
-            .thenReturn(0);
-    
+                .thenReturn(0);
+
         when(tripRepository.countTripsForUserByIdSince(eq(testUser.getUserId()), any()))
-            .thenReturn(12); // Bronze passes
-    
+                .thenReturn(12); // Bronze passes
+
         // Fail Silver + Gold
         when(tripRepository.countTripsForUserBetween(eq(testUser.getUserId()), any(), any()))
-            .thenReturn(3); // <5 → Silver fails → Gold fails
-    
+                .thenReturn(3); // <5 → Silver fails → Gold fails
+
         loyaltyTierService.updateUserTier(testUser);
-    
+
         assertEquals(TierType.BRONZE, testUser.getTierType());
         verify(userRepository).save(testUser);
     }
-    
-@Test
-void testUpdateUserTier_Silver() {
-    when(reservationRepository.missedReservationscount(eq(testUser.getUserId()), any()))
-        .thenReturn(0);
 
-    when(tripRepository.countUnreturnedBikesByUser(eq(testUser.getUserId())))
-        .thenReturn(0);
+    @Test
+    void testUpdateUserTier_Silver() {
+        when(reservationRepository.missedReservationscount(eq(testUser.getUserId()), any()))
+                .thenReturn(0);
 
-    when(tripRepository.countTripsForUserByIdSince(eq(testUser.getUserId()), any()))
-        .thenReturn(12); // Bronze passes
+        when(tripRepository.countUnreturnedBikesByUser(eq(testUser.getUserId())))
+                .thenReturn(0);
 
-    when(tripRepository.countTripsForUserBetween(eq(testUser.getUserId()), any(), any()))
-        .thenAnswer(inv -> {
-            LocalDateTime start = inv.getArgument(1);
-            LocalDateTime end   = inv.getArgument(2);
+        when(tripRepository.countTripsForUserByIdSince(eq(testUser.getUserId()), any()))
+                .thenReturn(12); // Bronze passes
 
-            long days = java.time.Duration.between(start, end).toDays();
+        when(tripRepository.countTripsForUserBetween(eq(testUser.getUserId()), any(), any()))
+                .thenAnswer(inv -> {
+                    LocalDateTime start = inv.getArgument(1);
+                    LocalDateTime end = inv.getArgument(2);
 
-            // ---- Silver checks (approx 30 days) ----
-            if (days >= 28 && days <= 32) {
-                return 5; // Silver passes
-            }
+                    long days = java.time.Duration.between(start, end).toDays();
 
-            // ---- Gold checks (approx 7 days) ----
-            if (days >= 6 && days <= 8) {
-                return 0; // Gold fails
-            }
+                    // ---- Silver checks (approx 30 days) ----
+                    if (days >= 28 && days <= 32) {
+                        return 5; // Silver passes
+                    }
 
-            return 0;
-        });
+                    // ---- Gold checks (approx 7 days) ----
+                    if (days >= 6 && days <= 8) {
+                        return 0; // Gold fails
+                    }
 
-    loyaltyTierService.updateUserTier(testUser);
+                    return 0;
+                });
 
-    assertEquals(TierType.SILVER, testUser.getTierType());
-    verify(userRepository).save(testUser);
-}
+        loyaltyTierService.updateUserTier(testUser);
 
-@Test
-void testUpdateUserTier_Gold() {
+        assertEquals(TierType.SILVER, testUser.getTierType());
+        verify(userRepository).save(testUser);
+    }
 
-    when(reservationRepository.missedReservationscount(eq(testUser.getUserId()), any()))
-        .thenReturn(0);
-    when(tripRepository.countUnreturnedBikesByUser(eq(testUser.getUserId())))
-        .thenReturn(0);
-    when(tripRepository.countTripsForUserByIdSince(eq(testUser.getUserId()), any()))
-        .thenReturn(12); // Bronze
+    @Test
+    void testUpdateUserTier_Gold() {
 
-    // Silver + Gold pass
-    when(tripRepository.countTripsForUserBetween(eq(testUser.getUserId()), any(), any()))
-        .thenReturn(6); // >=5
+        when(reservationRepository.missedReservationscount(eq(testUser.getUserId()), any()))
+                .thenReturn(0);
+        when(tripRepository.countUnreturnedBikesByUser(eq(testUser.getUserId())))
+                .thenReturn(0);
+        when(tripRepository.countTripsForUserByIdSince(eq(testUser.getUserId()), any()))
+                .thenReturn(12); // Bronze
 
-    loyaltyTierService.updateUserTier(testUser);
+        // Silver + Gold pass
+        when(tripRepository.countTripsForUserBetween(eq(testUser.getUserId()), any(), any()))
+                .thenReturn(6); // >=5
 
-    assertEquals(TierType.GOLD, testUser.getTierType());
-    verify(userRepository).save(testUser);
-}
+        loyaltyTierService.updateUserTier(testUser);
+
+        assertEquals(TierType.GOLD, testUser.getTierType());
+        verify(userRepository).save(testUser);
+    }
 
 }

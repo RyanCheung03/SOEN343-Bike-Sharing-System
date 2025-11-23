@@ -8,6 +8,7 @@ import com.soen343.tbd.domain.model.Station;
 import com.soen343.tbd.domain.model.Trip;
 import com.soen343.tbd.domain.model.enums.BillStatus;
 import com.soen343.tbd.domain.model.ids.BillId;
+import com.soen343.tbd.domain.model.ids.UserId;
 import com.soen343.tbd.domain.model.user.User;
 import com.soen343.tbd.domain.repository.BillRepository;
 import com.soen343.tbd.domain.repository.StationRepository;
@@ -33,15 +34,21 @@ public class BillingService {
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
     private final PaymentGateway paymentGateway;
+    private final FlexMoneyService flexMoneyService;
 
-    public BillingService(BillRepository billRepository, TripRepository tripRepository,
-                          UserRepository userRepository, StationRepository stationRepository,
-                          PaymentGateway paymentGateway) {
+    public BillingService(BillRepository billRepository, 
+                        TripRepository tripRepository,
+                        UserRepository userRepository, 
+                        StationRepository stationRepository,
+                        PaymentGateway paymentGateway,
+                        FlexMoneyService flexMoneyService
+                ) {
         this.billRepository = billRepository;
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.stationRepository = stationRepository;
         this.paymentGateway = paymentGateway;
+        this.flexMoneyService = flexMoneyService;
     }
 
     @Transactional(readOnly = true)
@@ -138,6 +145,20 @@ public class BillingService {
         return true;
     }
 
+    /**
+     * Use flex money to reduce a bill's cost
+     */
+    @Transactional
+    public Bill applyFlexMoney(Bill bill, UserId userId) {
+
+        double originalCost = bill.getDiscountedCost();
+        double reducedCost = flexMoneyService.reduceBillWithFlexMoney(userId, originalCost);
+
+        bill.setDiscountedCost(reducedCost);
+
+        return bill;
+}
+
     private UserBillingHistoryResponse createBillingHistoryResponse(List<Trip> trips, List<Bill> bills, User user) {
         // Create a map of bills by trip ID for easy lookup
         Map<Long, Bill> billByTripId = bills.stream()
@@ -165,6 +186,12 @@ public class BillingService {
                     String startStationName = startStation != null ? startStation.getStationName() : "Unknown";
                     String endStationName = endStation != null ? endStation.getStationName() : "In Progress";
 
+                    // Calculate regular cost (without discount)
+                    double regularCost = 0.0;
+                    if (trip.getPricingStrategy() != null) {
+                        regularCost = trip.getPricingStrategy().calculateCost(trip.calculateDurationInMinutes());
+                    }
+
                     return new UserBillingHistoryResponse.TripBillDTO(
                             trip.getTripId().value(),
                             trip.getBikeId().value(),
@@ -178,7 +205,8 @@ public class BillingService {
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPricingTypeName() : "Standard Bike Pricing",
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getBaseFee() : 0.0,
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPerMinuteRate() : 0.0,
-                            bill != null ? bill.getDiscountedCost() : 0.0
+                            bill != null ? bill.getDiscountedCost() : 0.0,
+                            regularCost
                     );
                 })
                 .collect(Collectors.toList());
@@ -244,6 +272,12 @@ public class BillingService {
                     String startStationName = startStation != null ? startStation.getStationName() : "Unknown";
                     String endStationName = endStation != null ? endStation.getStationName() : "In Progress";
 
+                    // Calculate regular cost (without discount)
+                    double regularCost = 0.0;
+                    if (trip.getPricingStrategy() != null) {
+                        regularCost = trip.getPricingStrategy().calculateCost(trip.calculateDurationInMinutes());
+                    }
+
                     return new AllBillingHistoryResponse.SystemTripBillDTO(
                             trip.getTripId().value(),
                             trip.getUserId().value(),
@@ -260,7 +294,8 @@ public class BillingService {
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPricingTypeName() : "Standard Bike Pricing",
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getBaseFee() : 0.0,
                             trip.getPricingStrategy() != null ? trip.getPricingStrategy().getPerMinuteRate() : 0.0,
-                            bill != null ? bill.getDiscountedCost() : 0.0
+                            bill != null ? bill.getDiscountedCost() : 0.0,
+                            regularCost
                     );
                 })
                 .collect(Collectors.toList());
@@ -290,4 +325,5 @@ public class BillingService {
                 systemTripBills
         );
     }
+
 }

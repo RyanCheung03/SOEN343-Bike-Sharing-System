@@ -36,15 +36,23 @@ public class LoyaltyTierService {
     }
 
     // This service method updated the Tier for a given user
-    public void updateUserTier(User user) {
+    // Returns true if the tier was updated, false otherwise
+    public boolean updateUserTier(User user) {
         TierType newTier = calculateUserTier(user);
         TierType currentTier = user.getTierType();
         // only update if tier has changed
         if (currentTier == null || currentTier != newTier) {
             user.setTierType(newTier);
             userRepository.save(user);
-            System.out.println("operation completed ");
+            return true;
         }
+        return false;
+    }
+
+    // Resets the user's tier to NONE (e.g. penalty for expired reservation)
+    public void resetTierToNone(User user) {
+        user.setTierType(TierType.NONE);
+        userRepository.save(user);
     }
 }
 
