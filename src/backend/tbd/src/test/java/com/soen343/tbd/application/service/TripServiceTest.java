@@ -1,5 +1,6 @@
 package com.soen343.tbd.application.service;
 
+import com.soen343.tbd.application.exception.StationFullException;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.domain.model.*;
 import com.soen343.tbd.domain.model.enums.*;
@@ -18,6 +19,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.core.read.ListAppender;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -239,6 +245,46 @@ public class TripServiceTest {
         verify(userService, times(2)).getUserById(userId);
         verify(tripRepository, times(2)).save(trip);
         verify(billRepository).save(any(Bill.class));
+    }
+
+    /**
+     * Test TripService.returnBikeService when returning a bike to a full station.
+     * Should throw StationFullException.
+     */
+    @Test
+    void returnBikeServiceTest_ReturnToFullStation_ThrowsAndLogs() {
+        TripId tripId = new TripId(1L);
+        BikeId bikeId = new BikeId(1L);
+        DockId dockId = new DockId(1L);
+        UserId userId = new UserId(1L);
+        StationId stationId = new StationId(1L);
+
+        // Create a station whose capacity equals numberOfBikesDocked => FULL
+        Station fullStation = new Station(stationId, "Full Station", StationAvailability.FULL,
+                StationStatus.ACTIVE, "pos", "addr", 5, 5, java.util.Collections.emptyList());
+
+        when(stationRepository.findById(stationId)).thenReturn(Optional.of(fullStation));
+
+        // Attach a ListAppender to the TripService logger to capture warnings
+        Logger slfLogger = LoggerFactory.getLogger(TripService.class);
+        ch.qos.logback.classic.Logger classicLogger = (ch.qos.logback.classic.Logger) slfLogger;
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        classicLogger.addAppender(listAppender);
+
+        StationFullException ex = assertThrows(StationFullException.class, () ->
+                tripService.returnBikeService(tripId, bikeId, dockId, userId, stationId)
+        );
+
+        // Verify the logger captured the expected warning message
+        String expectedStatement = "Cannot return bike: Station " + stationId.value() + " is full";
+        boolean found = listAppender.list.stream()
+                .anyMatch(e -> e.getFormattedMessage().contains(expectedStatement));
+
+        assertThat(found).isTrue();
+
+        // Detach the appender
+        classicLogger.detachAppender(listAppender);
     }
 
     private Trip createTripForTests(TripId tripId, BikeId bikeId, UserId userId, StationId startStationId) {

@@ -144,7 +144,7 @@ public class ReservationExpiryScenarioIT {
                         bikeIdVal.equals(dto.getEntityId()) &&
                         EntityStatus.AVAILABLE.name().equals(dto.getNewState()) &&
                         EntityStatus.RESERVED.name().equals(dto.getPreviousState()) &&
-                        "Bike became available after reservation expiry".equals(dto.getMetadata())
+                        "Bike made available after reservation expiration".equals(dto.getMetadata())
         ));
     }
 

@@ -1,6 +1,5 @@
 package com.soen343.tbd.integration;
 
-import com.soen343.tbd.application.service.BillingService;
 import com.soen343.tbd.application.service.ReservationService;
 import com.soen343.tbd.application.service.TripService;
 import com.soen343.tbd.domain.model.*;

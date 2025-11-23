@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import java.util.Map;
 
-import com.soen343.tbd.domain.model.enums.BikeType;
+import com.soen343.tbd.domain.model.enums.*;
 import com.soen343.tbd.domain.model.pricing.EBikePricing;
 import com.soen343.tbd.domain.model.pricing.StandardBikePricing;
 import org.slf4j.Logger;
@@ -15,13 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.soen343.tbd.application.observer.StationSubject;
 import com.soen343.tbd.application.dto.EventDTO;
 import com.soen343.tbd.domain.model.*;
-import com.soen343.tbd.domain.model.enums.BikeStatus;
-import com.soen343.tbd.domain.model.enums.DockStatus;
-import com.soen343.tbd.domain.model.enums.EntityType;
-import com.soen343.tbd.domain.model.enums.EntityStatus;
 import com.soen343.tbd.domain.model.ids.*;
 import com.soen343.tbd.domain.model.helpers.Event;
 import com.soen343.tbd.domain.repository.*;
+import com.soen343.tbd.application.exception.StationFullException;
 
 @Service
 public class TripService {
@@ -216,14 +213,20 @@ public class TripService {
                 bikeId.value(), dockId.value(), userId.value(), stationId.value());
 
         // Fetch entities
+        Station selectedStation = stationRepository.findById(stationId)
+                .orElseThrow(() -> new RuntimeException("Station Not found with ID: " + stationId.value()));
+        // Check if station is full before proceeding
+        if (selectedStation.getStationAvailability() == StationAvailability.FULL) {
+            logger.warn("Cannot return bike: Station {} is full", stationId.value());
+            throw new StationFullException("Station is full: " + stationId.value());
+        }
         Trip currentTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip Not found with ID: " + tripId.value()));
         Bike selectedBike = bikeRepository.findById(bikeId)
                 .orElseThrow(() -> new RuntimeException("Bike Not found with ID: " + bikeId.value()));
         Dock selectedDock = dockRepository.findById(dockId)
                 .orElseThrow(() -> new RuntimeException("Dock Not found with ID: " + dockId.value()));
-        Station selectedStation = stationRepository.findById(stationId)
-                .orElseThrow(() -> new RuntimeException("Station Not found with ID: " + stationId.value()));
+
 
         logger.info("Found bike: {}, dock: {}, station: {}",
                 selectedBike.getBikeId().value(),
