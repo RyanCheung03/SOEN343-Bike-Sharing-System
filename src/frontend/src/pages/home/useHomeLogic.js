@@ -41,6 +41,8 @@ export default function useHomeLogic() {
     const [reservationSuccessPopup, setReservationSuccessPopup] = useState(false);
     const [tripSummaryData, setTripSummaryData] = useState(null);
     const [reservationExpiredPopup, setReservationExpiredPopup] = useState(false);
+    const [showTierPopup, setShowTierPopup] = useState(false);
+    const [tierChangeData, setTierChangeData] = useState({ oldTier: "", newTier: "" });
 
 
     const fullName = localStorage.getItem('user_full_name');
@@ -322,18 +324,33 @@ export default function useHomeLogic() {
     // Window alert upon tier change (while logged in)
     // Added interval so that constantly checking
     useEffect(() => {
-
-        const interval = setInterval(() => {
+        const checkTierChange = () => {
             const currentTier = localStorage.getItem('tier');
             if (lastTierRef.current && currentTier && lastTierRef.current !== currentTier) {
-                alert(`Your loyalty tier has changed: ${lastTierRef.current} → ${currentTier}`);
+                setTierChangeData({ oldTier: lastTierRef.current, newTier: currentTier });
+                setShowTierPopup(true);
                 lastTierRef.current = currentTier;
-                localStorage.setItem('previousTier', currentTier);
+                if (userEmail) {
+                    localStorage.setItem(`previousTier_${userEmail}`, currentTier);
+                }
             }
-        }, 2000); // Checking every 2 seconds
+        };
 
-    return () => clearInterval(interval);
-}, []);
+        // Check periodically
+        const interval = setInterval(checkTierChange, 2000);
+        
+        // Also check immediately when we know it might have changed
+        window.addEventListener('tierUpdated', checkTierChange);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('tierUpdated', checkTierChange);
+        };
+    }, []);
+
+    const handleCloseTierPopup = () => {
+        setShowTierPopup(false);
+    };
 
     // API Operations
     const toggleStationStatus = async (stationId, currentStatus) => {
@@ -534,6 +551,7 @@ export default function useHomeLogic() {
         localStorage.removeItem('user_email');
         localStorage.removeItem('user_full_name');
         localStorage.removeItem('user_role');
+        localStorage.removeItem('tier'); // Clear tier on logout
         delete axios.defaults.headers.common['Authorization'];
         navigate('/login?logout=1', { replace: true });
     };
@@ -729,6 +747,9 @@ export default function useHomeLogic() {
         reservationSuccessPopup,
         showCancelReservationPopup,
         reservationExpiredPopup,
+        showTierPopup,
+        tierChangeData,
+        handleCloseTierPopup,
 
         // Actions
         handleLogout,

@@ -31,6 +31,9 @@ public class AuthController {
     @Autowired
     private com.soen343.tbd.application.service.LoyaltyTierService loyaltyTierService;
 
+    @Autowired
+    private com.soen343.tbd.application.service.ReservationService reservationService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         // Authenticate user
@@ -39,6 +42,17 @@ public class AuthController {
             String token = jwtUtil.generateToken(loginRequest.getEmail());
             // Fetch user details
             User user = userRepository.findByEmail(loginRequest.getEmail()).orElse(null);
+            
+            // Check for expired reservations immediately upon login
+            // This ensures that if a reservation expired while offline, the user is penalized BEFORE we build the response
+            try {
+                reservationService.checkAndExpireReservationsForUser(user.getUserId());
+                // Reload user to get updated tier/flag status
+                user = userRepository.findByEmail(loginRequest.getEmail()).orElse(user);
+            } catch (Exception e) {
+                System.err.println("Failed to check expired reservations on login: " + e.getMessage());
+            }
+
             String fullName = user.getFullName();
             String username = user.getUsername();
 

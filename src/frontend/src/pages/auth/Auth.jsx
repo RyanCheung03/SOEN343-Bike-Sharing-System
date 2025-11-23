@@ -3,6 +3,7 @@ import "./Auth.css";
 import logo from "../../assets/logo.png";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import TierChangePopup from "../../components/tierChangePopup/TierChangePopup";
 
 const initialForm = {
   fullName: "",
@@ -27,6 +28,8 @@ const Auth = () => {
   const [formData, setFormData] = useState(initialForm);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showTierPopup, setShowTierPopup] = useState(false);
+  const [tierChangeData, setTierChangeData] = useState({ oldTier: "", newTier: "" });
 
   const handleLogout = () => {
     // Clear stored auth info and axios header
@@ -34,6 +37,7 @@ const Auth = () => {
       localStorage.removeItem("jwt_token");
       localStorage.removeItem("user_email");
       localStorage.removeItem("user_full_name");
+      localStorage.removeItem("tier"); // Clear tier on logout
       delete axios.defaults.headers.common["Authorization"];
     } finally {
       // Reset UI state
@@ -97,20 +101,23 @@ const Auth = () => {
         localStorage.setItem("tier", tier || "NONE"); // Store user tier
         localStorage.setItem("flexMoney", flexMoney || 0); // Store flex money
 
-        const previousTierKey = `previousTier_${email}`; // storing w email to differentiate users, otherwise will show popup anytime login w a different user when their tiers are different
-        const previousTier = localStorage.getItem(previousTierKey);
+        const previousTierKey = `previousTier_${email}`; // storing w email to differentiate users
+        const storedTier = localStorage.getItem(previousTierKey);
         const newTier = tier || "NONE";
-
-        if (previousTier && previousTier !== newTier) {
-          alert(`Your loyalty tier has changed: ${previousTier} → ${newTier}`);
-        }
-        localStorage.setItem(previousTierKey, newTier);
 
         // Set default header for future requests
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        // Navigate to home page
-        navigate("/home");
+        // Only show popup if we have a record of a previous tier AND it's different
+        if (storedTier && storedTier !== newTier) {
+          setTierChangeData({ oldTier: storedTier, newTier: newTier });
+          setShowTierPopup(true);
+          localStorage.setItem(previousTierKey, newTier);
+        } else {
+          // First time on this device OR no change
+          localStorage.setItem(previousTierKey, newTier);
+          navigate("/home");
+        }
       }
       // For registration
       else {
@@ -152,8 +159,20 @@ const Auth = () => {
     setError("");
   };
 
+  const handlePopupClose = () => {
+    setShowTierPopup(false);
+    navigate("/home");
+  };
+
   return (
     <div>
+      {showTierPopup && (
+        <TierChangePopup
+          oldTier={tierChangeData.oldTier}
+          newTier={tierChangeData.newTier}
+          onClose={handlePopupClose}
+        />
+      )}
       <div className="header-bar">
         <img src={logo} className="corner-logo" alt="logo" />
       </div>
@@ -348,6 +367,13 @@ const Auth = () => {
           </div>
         </div>
       </div>
+      {showTierPopup && (
+        <TierChangePopup
+          oldTier={tierChangeData.oldTier}
+          newTier={tierChangeData.newTier}
+          onClose={handlePopupClose}
+        />
+      )}
     </div>
   );
 };
