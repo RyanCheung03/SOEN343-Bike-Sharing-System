@@ -28,7 +28,7 @@ The application combines a **responsive React frontend**, a **Java Spring Boot b
 ## ✨ Key Features
 
 ### 🗺️ Interactive Station Map
-- Real-time visualization of bike stations using **Leaflet + OpenStreetMap**
+- Real-time visualization of bike stations using **Leaflet**
 - Live station status (active/inactive)
 - Dock-level availability (empty, available, reserved)
 - Visual indicators for:
