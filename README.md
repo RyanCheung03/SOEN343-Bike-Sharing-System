@@ -1,4 +1,4 @@
-# BikeSOEN343
+# The Biker's Dream - Bike Sharing Web app
 SOEN 343 Project – The Biker's Dream ( Fall 2025 )
 
 ---
