@@ -1,3 +1,22 @@
+---
+
+## 📌 Project Context & Contributions
+
+This repository is a fork of a **Concordia University (SOEN 343) group project** completed during Fall 2025 with a team of 6 students.
+
+**My individual contributions include:**
+- Designed the backend **project folder structure** and enforced a **layered architecture** (controller, service, persistence layers)
+- Designed and implemented the **billing domain logic** using the **Strategy pattern** to support flexible pricing models
+- Implemented end-to-end **billing computation workflows**, triggered upon trip completion and exposed via backend APIs
+- Designed and implemented **PostgreSQL schemas**, tables, relationships, and primary/foreign keys
+- Applied **repository and adapter patterns** to isolate persistence logic and manage database transactions
+- Built the **billing history and payment workflow**, enabling users to view and settle past bills
+- Wrote the majority of **unit tests** using **JUnit, Mockito, and AssertJ**, ensuring service-layer correctness
+- Implemented structured **application logging** to improve observability and debugging
+
+The project was developed collaboratively. This fork is maintained to showcase my personal contributions.
+
+
 # The Bikers’ Dream – Interactive Bike Sharing Web App
 SOEN 343 Project ( Concordia University - Fall 2025 )
 
@@ -17,10 +36,6 @@ The application combines a **responsive React frontend**, a **Java Spring Boot b
 | @RyanCheung03   | Ryan Cheung       | 40282200  |
 | @ammarranko     | Ammar Ranko       | 40281232  |
 | @nicoledesigns  | Nicole Antoun     | 40284018  |
-
----
-
-
 
 
 ---
@@ -87,13 +102,6 @@ The application combines a **responsive React frontend**, a **Java Spring Boot b
 
 
 ---
-
-## 🧠 System Overview
-
-
-
-
-
 
 ## Requirements
 Before running the application, ensure you have the following installed:
