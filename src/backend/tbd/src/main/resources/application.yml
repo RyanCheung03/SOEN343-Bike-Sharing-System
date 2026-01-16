@@ -2,9 +2,9 @@ spring:
   application:
     name: tbd
   datasource:
-    url: jdbc:postgresql://ep-sweet-queen-aet1x7oq-pooler.c-2.us-east-2.aws.neon.tech:5432/neondb?sslmode=require&channelBinding=require
-    username: neondb_owner
-    password: npg_fd97WYNIkHMJ
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none    # Changed from 'create' to 'none' to prevent table recreation
